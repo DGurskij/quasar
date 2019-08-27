@@ -1,0 +1,11 @@
+#data {
+	position: fixed;
+	top: 350px;
+	font-size: 40px;
+	color: white;
+}
+
+#panel {
+	background-color: yellow;
+	display: none;
+}
