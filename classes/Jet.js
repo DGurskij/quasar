@@ -1,4 +1,4 @@
-class Flash
+class Jet
 {
   constructor(x, z, angle, color)
   {

@@ -22,7 +22,6 @@ var flash_u_projection;
 var flash_u_rotate;
 
 var projection;
-var rotation;
 var rotate_x;
 var rotate_y;
 var rotate_z;
@@ -36,8 +35,9 @@ var initShaders = function()
 {
   let canvas = document.getElementById('area');
 
-  width = canvas.width = document.body.offsetWidth;
-  height = canvas.height = screen.availHeight - 150;
+  width = canvas.width = screen.availWidth;
+  height = canvas.height = screen.availHeight * 0.9;
+  depth = (width + height) / 2;
 
   gl = canvas.getContext("webgl");
   gl.getExtension('OES_standard_derivatives');
@@ -85,20 +85,20 @@ var initShaders = function()
   flash_u_color      = gl.getUniformLocation(flash_shader, "u_color");
   flash_u_projection = gl.getUniformLocation(flash_shader, "u_projection");
   flash_u_rotate     = gl.getUniformLocation(flash_shader, "u_rotate");
-
-  rotation = [-1.08, 0.24, 0];
-  //rotation = [0, 0, 0];
-  scale = 2.8;
 }
 
 
 var createShader = function(gl, type, source)
 {
   let shader = gl.createShader(type);
+
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
-  let success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-  if (success) return shader;
+
+  if (gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+  {
+    return shader;
+  }
 
   console.log(gl.getShaderInfoLog(shader));
   gl.deleteShader(shader);
@@ -107,11 +107,15 @@ var createShader = function(gl, type, source)
 var createProgram = function(gl, vertexShader, fragmentShader)
 {
   let program = gl.createProgram();
+
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);
   gl.linkProgram(program);
-  let success = gl.getProgramParameter(program, gl.LINK_STATUS);
-  if (success) return program;
+
+  if (gl.getProgramParameter(program, gl.LINK_STATUS))
+  {
+    return program;
+  }
 
   console.log(gl.getProgramInfoLog(program));
   gl.deleteProgram(program);

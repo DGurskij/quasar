@@ -2,29 +2,10 @@ var random = function(v1, v2)
 {
 	if (v1 < v2)
 	{
-		return Math.random() * (v2-v1) + v1;
+		return Math.random() * (v2 - v1) + v1;
 	}
 
-	return Math.random() * (v1-v2) + v2;
-}
-
-var rotate = function(value, index)
-{
-	rotation[index] = value * Math.PI / 180;
-
-	if(index == 2)
-	{
-		rotate_z = getRotationZ();
-	}
-	else if (index)
-	{
-		rotate_y = getRotationY();
-	}
-	else
-	{
-		rotate_x = getRotationX();
-	}
-
+	return Math.random() * (v1 - v2) + v2;
 }
 
 var getProjectionMatrix = function(width, height, depth)
@@ -37,10 +18,10 @@ var getProjectionMatrix = function(width, height, depth)
 	];
 }
 
-var getRotationX = function()
+var getRotationX = function(a)
 {
-	let s = Math.sin(rotation[0]);
-	let c = Math.cos(rotation[0]);
+	let s = Math.sin(a);
+	let c = Math.cos(a);
 
 	return [
 		1, 0, 0, 0,
@@ -50,10 +31,10 @@ var getRotationX = function()
 	];
 }
 
-var getRotationY = function()
+var getRotationY = function(a)
 {
-	let s = Math.sin(rotation[1]);
-	let c = Math.cos(rotation[1]);
+	let s = Math.sin(a);
+	let c = Math.cos(a);
 
 	return [
 		c, 0, -s, 0,
@@ -63,10 +44,10 @@ var getRotationY = function()
 	];
 }
 
-var getRotationZ = function()
+var getRotationZ = function(a)
 {
-	let s = Math.sin(rotation[2]);
-	let c = Math.cos(rotation[2]);
+	let s = Math.sin(a);
+	let c = Math.cos(a);
 
 	return [
 		c, s, 0, 0,
@@ -86,6 +67,19 @@ var vecSum = function(v1, v2)
 	{
 		res[i] = v1[i] + v2[i];
 		i++;
+	}
+
+	return res;
+}
+
+var vecMul = function(v, mul)
+{
+	let l = v.length;
+	let res = [];
+
+	for(let i = 0; i < l; i++)
+	{
+		res[i] = v[i] * mul;
 	}
 
 	return res;

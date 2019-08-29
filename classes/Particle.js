@@ -9,9 +9,9 @@ class Particle
     this.color = color;
   }
 
-  changePosition(dA, dx)
+  changePosition()
   {
-    this.angle += dA;
-    this.x -= dx;
+    this.angle += move_angle;
+    this.x -= move_x;
   }
 }

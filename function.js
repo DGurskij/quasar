@@ -7,8 +7,6 @@ var quantity_flashes;
 
 var state = 0;
 
-var d_angle;
-var dx;
 var add_particle;
 
 var light;
@@ -17,14 +15,24 @@ var light_up;
 var engine = 0;
 
 var r;
+var move_x;
+var move_angle;
+var gen_offset;
 
 //Get Window params and Deploy Field
 var launch = function()
 {
-	projection = getProjectionMatrix(gl.drawingBufferWidth, gl.drawingBufferHeight, 1500);
-	rotate_x   = getRotationX();
-	rotate_y   = getRotationY();
-	rotate_z   = getRotationZ();
+	projection = getProjectionMatrix(width, height, depth);
+
+	rotate_x = getRotationX(INIT_ANGLE_X);
+	rotate_y = getRotationY(INIT_ANGLE_Y);
+	rotate_z = getRotationZ(INIT_ANGLE_Z);
+
+	let rotate_controllers = document.getElementsByName('control_rotate');
+
+	rotate_controllers[0].value = INIT_ANGLE_X * RAD_TO_DEGR;
+	rotate_controllers[1].value = INIT_ANGLE_Y * RAD_TO_DEGR;
+	rotate_controllers[2].value = INIT_ANGLE_Z * RAD_TO_DEGR;
 
 	console.log("Engine start");
 	state = 1;
@@ -34,21 +42,24 @@ var launch = function()
 	quantity_particles = particles.length;
 	quantity_flashes = flashes.length;
 
-	d_angle = 0.00026;
-	dx = 0.02;
-	add_Particles = 1.0;
-
-	r_generate = 10.0;
+	add_particle = 0;
 
 	light = 2.0;
 	light_up = 0.0;
 
-	r = gl.drawingBufferHeight / 1.2;
+	r = 600;//gl.drawingBufferHeight / 1.2;
+	let c = r / 600;
 
-	while (r_generate < r + 1)
+	move_x = MOVE_X / c;
+	move_angle = MOVE_ANGLE / c;
+	gen_offset = GEN_OFFSET / c;
+
+	let radius = r;
+
+	while (radius > MIN_X)
 	{
-		fastGenerate(r_generate);
-		r_generate += 0.6;
+		generateParticles(radius);
+		radius -= GENERATE_STEP;
 	}
 
 	console.log(quantity_particles);
@@ -59,55 +70,32 @@ var launch = function()
 //Do stars's lifecycle, gravity.
 function animationEngine()
 {
-	if(add_particle < 1)
-	{
-		add_particle += 0.055;
-	}
-	else
-	{
-		let angle = PI_MUL_TWO;
-		let dalpha = Math.PI;
-		let size = 2.0;
-		let d_color = [0, 0, 0];
-
-		for (let k = 0; k < 2; k++)
-		{
-			for(let i = 0; i < 5; i++)
-			{
-				let z = random(-1, 1);
-				let d_angle = random(-PI_DIV_TWO, PI_DIV_TWO);
-				let d_size = 5 - 6 * Math.abs(d_angle) / PI_DIV_TWO;
-				let buff = 1.3 * Math.abs(d_angle) / PI_DIV_TWO;
-
-				d_color[0] = buff;
-				d_color[1] = buff;
-				d_color[2] = buff;
-
-				particles[quantity_particles++] = new Particle(r, z, size + d_size, angle + d_angle, vecSum(COLORS[k], d_color));
-			}
-
-			angle -= dalpha;
-		}
-
-		add_particle = 0.0;
-	}
-
 	for (let i = 0; i < quantity_particles; i++)
 	{
-		if(particles[i].x < 2.0)
+		if(particles[i].x < MIN_X)
 		{
 			particles.splice(i--, 1);
 			quantity_particles--;
 		}
 		else
 		{
-			particles[i].changePosition(d_angle, dx);
+			particles[i].changePosition();
 		}
+	}
+
+	if(add_particle < 1)
+	{
+		add_particle += ADD_STEP;
+	}
+	else
+	{
+		generateParticles(r);
+		add_particle = 0;
 	}
 
 	for (let i = 0; i < quantity_flashes; i++)
 	{
-		if(!flashes[i].changePosition(0.0, dx))
+		if(!flashes[i].changePosition())
 		{
 			flashes.splice(i--, 1);
 			quantity_flashes--;
@@ -163,7 +151,10 @@ function animationEngine()
 	{
 		for (let i = 0; i < 4; i++)
 		{
-			if(flash_info[i] != 0) continue;
+			if(flash_info[i] != 0)
+			{
+				continue;
+			}
 			else
 			{
 				flash_info[i] = generateFlash();
@@ -174,6 +165,7 @@ function animationEngine()
 				break;
 			}
 		}
+
 		if(random(0.0, 1.0) > 0.9)
 		{
 			//doFlash();
@@ -239,43 +231,39 @@ var drawScene = function(replace)
 
 	/*--------Draw flashes-------*/
 
-	if(quantity_flashes == 0)
+	if(quantity_flashes != 0)
 	{
-		return;
+		gl.useProgram(flash_shader);
+
+		gl.uniform1f(flash_u_color, 10.0);
+		gl.uniformMatrix4fv(flash_u_projection, false, projection);
+		gl.uniform3fv(flash_u_rotate, rotation);
+
+		let positionAttribute = gl.getAttribLocation(flash_shader, "a_position");
+		gl.enableVertexAttribArray(positionAttribute);
+
+		points = [];
+
+		for (let i = 0, k = 0, l = 0; i < quantity_flashes; i++)
+		{
+			points[l++] = flashes[i].x;
+			points[l++] = flashes[i].z;
+			points[l++] = flashes[i].color;
+			points[l++] = flashes[i].angle;
+
+			points[l++] = flashes[i].x;
+			points[l++] = flashes[i].z + flashes[i].long;
+			points[l++] = flashes[i].color;
+			points[l++] = flashes[i].angle;
+		}
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.DYNAMIC_DRAW);
+		gl.vertexAttribPointer(positionAttribute, 4, gl.FLOAT, false, 0, 0);
+
+		gl.lineWidth(5.0);
+		gl.drawArrays(gl.LINES, 0, 2 * quantity_flashes);
 	}
-
-	gl.useProgram(flash_shader);
-
-	gl.uniform1f(flash_u_color, 10.0);
-	gl.uniformMatrix4fv(flash_u_projection, false, projection);
-	gl.uniform3fv(flash_u_rotate, rotation);
-
-	let positionAttribute = gl.getAttribLocation(flash_shader, "a_position");
-	gl.enableVertexAttribArray(positionAttribute);
-
-	/*-----------Draw flash-----------*/
-
-	points = [];
-
-	for (let i = 0, k = 0, l = 0; i < quantity_flashes; i++)
-	{
-		points[l++] = flashes[i].x;
-		points[l++] = flashes[i].z;
-		points[l++] = flashes[i].color;
-		points[l++] = flashes[i].angle;
-
-		points[l++] = flashes[i].x;
-		points[l++] = flashes[i].z + flashes[i].long;
-		points[l++] = flashes[i].color;
-		points[l++] = flashes[i].angle;
-	}
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.DYNAMIC_DRAW);
-	gl.vertexAttribPointer(positionAttribute, 4, gl.FLOAT, false, 0, 0);
-
-	gl.lineWidth(5.0);
-	gl.drawArrays(gl.LINES, 0, 2 * quantity_flashes);
 }
 
 var setLight = function()
@@ -304,32 +292,32 @@ var generateFlash = function()
 	return res;
 }
 
-var fastGenerate = function(v)
+var generateParticles = function(v)
 {
 	let angle = PI_MUL_TWO;
-	let dalpha = Math.PI;
-	let size = 2;
+	let size;
 	let d_color = [0, 0, 0];
 
-	let alpha_offset = 0.013 * (r - v);
+	let alpha_offset = gen_offset * (r - v);
 
-	for(let k = 0; k < 2; k++)
+	for(let k = 0; k < QUANTITY_ARM; k++)
 	{
-		for(let i = 0; i < 5; i++)
+		for(let i = 0; i < QUANTITY_EL_GENERATE; i++)
 		{
-			let z = random(-1, 1);
 			let d_angle = random(-PI_DIV_TWO, PI_DIV_TWO);
-			let d_size = 5 - 6 * Math.abs(d_angle) / PI_DIV_TWO;
-			let buff = 1.3 * Math.abs(d_angle) / PI_DIV_TWO;
+			let z = Math.pow(-1, k) * random(-Z_DISPERSION * 0.3, Z_DISPERSION);
+			let disp = Math.abs(d_angle) / PI_DIV_TWO + Math.abs(Math.abs(z) - Z_DISPERSION * 0.35) / Z_DISPERSION / 0.35;
 
-			d_color[0] = buff;
-			d_color[1] = buff;
-			d_color[2] = buff;
+			size = MAX_SIZE - MIN_SIZE_MUL * disp;
 
-			particles[quantity_particles++] = new Particle(v, z, size + d_size, angle + alpha_offset + d_angle, vecSum(COLORS[k], d_color));
+			d_color[2] = disp;
+
+			let color = vecMul(vecSum(COLORS[k], d_color), 2.0 - disp);
+
+			particles[quantity_particles++] = new Particle(v, z, size, angle + alpha_offset + d_angle, color);
 		}
 
-		angle -= dalpha;
+		angle -= D_ALPHA;
 	}
 }
 
@@ -345,8 +333,8 @@ var doFlash = function()
 
 	for (let i = 0; i < 30; i++)
 	{
-		flashes[quantity_flashes++] = new Flash(0.0, -6.0, alpha, random(2.00, 2.05));
-		flashes[quantity_flashes++] = new Flash(0.0, 6.0, alpha, random(2.00, 2.05));
+		flashes[quantity_flashes++] = new Jet(0.0, -6.0, alpha, random(2.00, 2.05));
+		flashes[quantity_flashes++] = new Jet(0.0, 6.0, alpha, random(2.00, 2.05));
 		alpha += dAlpha;
 	}
 	light_up = 0.07;

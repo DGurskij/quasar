@@ -19,3 +19,21 @@ var resume = function(el)
   state = 1;
   engine = setInterval(animationEngine, 16);
 }
+
+var rotate = function(value, index)
+{
+	let v = value * DEGR_TO_RAD;
+
+	if(index == 2)
+	{
+		rotate_z = getRotationZ(v);
+	}
+	else if (index)
+	{
+		rotate_y = getRotationY(v);
+	}
+	else
+	{
+		rotate_x = getRotationX(v);
+	}
+}

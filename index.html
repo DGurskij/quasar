@@ -3,24 +3,26 @@
   <head>
     <meta charset="utf-8">
     <script type="text/javascript" src="constants.js"></script>
-		<script type="text/javascript" src="classes/Flash.js"></script>
+		<script type="text/javascript" src="classes/Jet.js"></script>
 		<script type="text/javascript" src="classes/Particle.js"></script>
     <script type="text/javascript" src="initShaders.js"></script>
     <script type="text/javascript" src="math.js"></script>
 		<script type="text/javascript" src="function.js"></script>
     <script type="text/javascript" src="controller.js"></script>
-    <!-- <script type="text/javascript" src="connection.js"></script> -->
     <link rel="stylesheet" href="style.css">
     <title>Quasar</title>
   </head>
   <body onload="{initShaders(); launch();}" style="margin: 0px;">
     <section id="panel">
-      <input type="button" name="" value="Pause" onclick="pause(this)">
-      <label for="">Rotate X</label><input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 0)">
-      <label for="">Rotate Y</label><input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 1)">
-      <label for="">Rotate Z</label><input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 2)">
+      <input type="button" value="Pause" onclick="pause(this)">
+      <label for="">Rotate X</label>
+      <input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 0)" name="control_rotate">
+      <label for="">Rotate Y</label>
+      <input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 1)" name="control_rotate">
+      <label for="">Rotate Z</label>
+      <input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 2)" name="control_rotate">
     </section>
-    <canvas id="area" style="background-color: black;"></canvas>
+    <canvas id="area"></canvas>
 
     <!--Shaders for draw particles-->
 
@@ -60,7 +62,7 @@
 
         mat4 transform = u_projection * u_rotation_x * u_rotation_y * u_rotation_z;
 
-        gl_Position = transform * vec4(x, y, a_position.y * 7.0 * (1.0 - a_position.x / u_radius), 1.0);
+        gl_Position = transform * vec4(x, y, a_position.y * a_position.x / u_radius, 1.0);
         gl_PointSize = a_position.z;
 
         v_color = vec4(a_color, 1.0) * (1.0 - a_position.x / u_radius) * flash;

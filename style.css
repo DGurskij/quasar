@@ -1,11 +1,23 @@
-#data {
-	position: fixed;
-	top: 350px;
-	font-size: 40px;
-	color: white;
+html {
+	background-color: black;
+	height: 100%;
+}
+
+body {
+	height: 100%;
+	overflow: hidden;
 }
 
 #panel {
-	background-color: yellow;
-	display: none;
+	color: white;
+	position: absolute;
+	left: 1%;
+	top: 1%;
+	display: flex;
+	flex-direction: column;
+	width: 20%;
+}
+
+input {
+	width: 100%;
 }
