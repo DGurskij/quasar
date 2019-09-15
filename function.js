@@ -304,15 +304,15 @@ var generateJetP = function()
 
 	for(let i = 0; i < 10; i++)
 	{
-		x = random(jets_start_x - 3, jets_start_x + 3);
+		x = random(jets_start_x - 10, jets_start_x + 10);
 		angle = random(0, PI_MUL_TWO);
-		size = random(4, 5);
+		size = random(3, 15);
 
 		jet_minus[quantity_p_jet_minus++] = new Particle(x, -jets_start_z, size, angle, [0.67, 0.87, angle / PI_DIV_TWO]);
 
-		x = random(jets_start_x - 3, jets_start_x + 3);
+		x = random(jets_start_x - 10, jets_start_x + 10);
 		angle = random(0, PI_MUL_TWO);
-		size = random(4, 5);
+		size = random(3, 15);
 
 		jet_plus[quantity_p_jet_plus++] = new Particle(x, jets_start_z, size, angle, [0.67, 0.87, angle / PI_DIV_TWO]);
 	}
