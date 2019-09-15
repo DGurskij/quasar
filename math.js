@@ -57,7 +57,9 @@ var getRotationZ = function(a)
 	];
 }
 
-var vecSum = function(v1, v2)
+/* vector operations */
+
+var vecSumVec = function(v1, v2)
 {
 	let l = v1.length;
 	let res = [];
@@ -72,7 +74,7 @@ var vecSum = function(v1, v2)
 	return res;
 }
 
-var vecMul = function(v, mul)
+var vecMulValue = function(v, mul)
 {
 	let l = v.length;
 	let res = [];
@@ -85,23 +87,22 @@ var vecMul = function(v, mul)
 	return res;
 }
 
-var flash_matrix =
-[
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0
-];
+var matrixMulMatrix = function(m1, m2)
+{
+	let res = [];
 
-var flash_matrix_null =
-[
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0,
-	0.0, 0.0, 0.0, 0.0
-];
+	for(let i = 0; i < 4; i++)
+	{
+		for(let j = 0; j < 4; j++)
+		{
+			res[4 * i + j] = 0;
 
-var flash_info =
-[
-	0, 0, 0, 0
-];
+			for(let k = 0; k < 4; k++)
+			{
+					res[4 * i + j] += m1[4 * i + k] * m2[4 * j + i];
+			}
+		}
+	}
+
+	return res;
+}

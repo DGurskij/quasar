@@ -36,4 +36,21 @@ var rotate = function(value, index)
 	{
 		rotate_x = getRotationX(v);
 	}
+
+  drawScene();
+}
+
+var forward = function(value)
+{
+  distance = value;
+
+  drawScene();
+}
+
+var generateJet = function()
+{
+  if(jets_time == 0)
+  {
+    jets_time = JETS_TIME;
+  }
 }

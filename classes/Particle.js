@@ -11,7 +11,7 @@ class Particle
 
   changePosition()
   {
-    this.angle += move_angle;
-    this.x -= move_x;
+    this.angle += p_move_angle;
+    this.x -= p_move_x;
   }
 }

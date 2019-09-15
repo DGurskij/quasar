@@ -3,7 +3,6 @@
   <head>
     <meta charset="utf-8">
     <script type="text/javascript" src="constants.js"></script>
-		<script type="text/javascript" src="classes/Jet.js"></script>
 		<script type="text/javascript" src="classes/Particle.js"></script>
     <script type="text/javascript" src="initShaders.js"></script>
     <script type="text/javascript" src="math.js"></script>
@@ -21,8 +20,10 @@
       <input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 1)" name="control_rotate">
       <label for="">Rotate Z</label>
       <input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 2)" name="control_rotate">
+      <label for="">Distance</label>
+      <input type="range" min="1" max="2" value="1" step="0.005" oninput="forward(this.value)">
     </section>
-    <canvas id="area"></canvas>
+    <canvas id="area" onclick="generateJet()"></canvas>
 
     <!--Shaders for draw particles-->
 
@@ -35,8 +36,37 @@
       uniform mat4 u_rotation_x;
       uniform mat4 u_rotation_y;
       uniform mat4 u_rotation_z;
+      uniform float u_distance;
       uniform float u_radius;
-      uniform mat4 u_flash;
+
+      varying vec4 v_color;
+
+      void main()
+      {
+        float x = a_position.x * cos(a_position.w);
+        float y = a_position.x * sin(a_position.w);
+
+        mat4 transform = u_projection * u_rotation_x * u_rotation_y * u_rotation_z;
+
+        gl_Position = transform * vec4(x, y, a_position.y * a_position.x / u_radius, u_distance);
+        gl_PointSize = a_position.z / u_distance;
+
+        v_color = vec4(a_color, 1.0) * (1.0 - a_position.x / u_radius);
+      }
+
+    </script>
+
+    <script id="particle_J-vertex-shader" type="notjs">
+      attribute vec4 a_position;
+      attribute vec3 a_color;
+
+      //global transform params
+      uniform mat4 u_projection;
+      uniform mat4 u_rotation_x;
+      uniform mat4 u_rotation_y;
+      uniform mat4 u_rotation_z;
+      uniform float u_distance;
+      uniform float u_max_h;
 
       varying vec4 v_color;
 
@@ -46,26 +76,20 @@
         float x = a_position.x * cos(a_position.w);
         float y = a_position.x * sin(a_position.w);
 
-        float flash = 1.0;
-        float dist, x1, y1;
-        for(int i = 0; i < 4; i++)
-        {
-          x1 = u_flash[i].x * cos(u_flash[i].y);
-          y1 = u_flash[i].x * sin(u_flash[i].y);
-
-          dist = distance(vec2(x1, y1), vec2(x, y));
-          if(dist < u_flash[i].w)
-          {
-            flash += u_flash[i].z * (u_flash[i].w - dist) / u_flash[i].w;
-          }
-        }
-
         mat4 transform = u_projection * u_rotation_x * u_rotation_y * u_rotation_z;
 
-        gl_Position = transform * vec4(x, y, a_position.y * a_position.x / u_radius, 1.0);
-        gl_PointSize = a_position.z;
+        gl_Position = transform * vec4(x, y, a_position.y, u_distance);
 
-        v_color = vec4(a_color, 1.0) * (1.0 - a_position.x / u_radius) * flash;
+        gl_PointSize = a_position.z / u_distance;
+
+        float z = a_position.y;
+
+        if(a_position.y < 0.0)
+        {
+          z = -a_position.y;
+        }
+
+        v_color = vec4(a_color, 1.0) * (1.0 - pow(z / u_max_h, 3.0));
       }
 
     </script>
@@ -80,95 +104,12 @@
 
       void main()
       {
-        float alpha = 1.0 - 2.0 * length(gl_PointCoord - 0.5);
-
-        if(alpha < 0.1)
+        if(length(gl_PointCoord - 0.5) > 0.5)
         {
           discard;
         }
 
-        gl_FragColor = v_color * u_light * alpha;
-      }
-
-    </script>
-
-    <!--Shaders for draw flash-->
-
-    <script id="flash-vertex-shader" type="notjs">
-      attribute vec4 a_position;
-
-      //global transform params
-      uniform mat4 u_projection;
-      uniform vec3 u_rotate;
-
-      varying vec4 v_color;
-
-      void main()
-      {
-        float x, y;
-        float _sign = sign(a_position.y);
-        if(a_position.x > 0.0)
-        {
-          x = (a_position.x + _sign * a_position.y / 85.0) * cos(a_position.w);
-          y = (a_position.x + _sign * a_position.y / 85.0) * sin(a_position.w);
-        }
-        else
-        {
-          x = (a_position.x - _sign * a_position.y / 85.0) * cos(a_position.w);
-          y = (a_position.x - _sign * a_position.y / 85.0) * sin(a_position.w);
-        }
-
-        mat4 rotate_x, rotate_y, rotate_z;
-
-        // rotate x
-        float c = cos(u_rotate.x);
-        float s = sin(u_rotate.x);
-        rotate_x[0] = vec4(1.0, 0.0, 0.0, 0.0);
-        rotate_x[1] = vec4(0.0,   c,  -s, 0.0);
-        rotate_x[2] = vec4(0.0,   s,   c, 0.0);
-        rotate_x[3] = vec4(0.0, 0.0, 0.0, 1.0);
-
-        // rotate x
-        c = cos(u_rotate.y);
-        s = sin(u_rotate.y);
-        rotate_y[0] = vec4(c,   0.0,   s, 0.0);
-        rotate_y[1] = vec4(0.0, 1.0, 0.0, 0.0);
-        rotate_y[2] = vec4(-s,  0.0,   c, 0.0);
-        rotate_y[3] = vec4(0.0, 0.0, 0.0, 1.0);
-
-        //rotate z
-        c = cos(u_rotate.z);
-        s = sin(u_rotate.z);
-        rotate_z[0] = vec4(  c,  -s, 0.0, 0.0);
-        rotate_z[1] = vec4(  s,   c, 0.0, 0.0);
-        rotate_z[2] = vec4(0.0, 0.0, 1.0, 0.0);
-        rotate_z[3] = vec4(0.0, 0.0, 0.0, 1.0);
-
-        mat4 transform = u_projection * rotate_x * rotate_y * rotate_z;
-
-        gl_Position = transform * vec4(x, y, a_position.y, 1.0);
-
-        float min = floor(a_position.z);
-        float max = min + 0.05;
-        float r = 2.0 * (a_position.z - min) / (max - min);
-        v_color = vec4(abs(r - 0.5) - abs(r - 1.0) + 0.5,
-          abs(2.0 - r) - abs(1.5 - r) + r - abs(0.5 - r),
-          abs(r - 1.5) - abs(r - 1.0) + 0.5, 1);
-      }
-
-    </script>
-
-    <script id="flash-fragment-shader" type="notjs">
-
-      precision mediump float;
-
-      uniform float u_color;
-
-      varying vec4 v_color;
-
-      void main()
-      {
-        gl_FragColor = v_color * u_color;
+        gl_FragColor = v_color * u_light;
       }
 
     </script>
