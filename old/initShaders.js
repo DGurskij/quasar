@@ -59,13 +59,7 @@ var initShaders = function()
   height = canvas.height = screen.availHeight * 0.9;
   depth = width + height;
 
-  gl = canvas.getContext("webgl2");
-
-  if(!gl)
-  {
-    document.getElementById('error').style.display = "block";
-    return 0;
-  }
+  gl = canvas.getContext("webgl");
 
   let vertexShaderSource;
   let fragmentShaderSource;
@@ -130,8 +124,6 @@ var initShaders = function()
   color_buffer = gl.createBuffer();
 
   gl.enable(gl.DEPTH_TEST);
-
-  return 1;
 }
 
 

@@ -43,11 +43,6 @@ var jets_start_z;
 //Get Window params and Deploy Field
 var launch = function()
 {
-	if(!initShaders())
-	{
-		return 0;
-	}
-	
 	projection = getProjectionMatrix(width, height, depth);
 
 	rotate_x = getRotationX(INIT_ANGLE_X);
@@ -224,13 +219,13 @@ var drawScene = function(replace)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(0);
+		gl.vertexAttribPointer(particle_j_a_pos, 4, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(particle_j_a_pos);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(1);
+		gl.vertexAttribPointer(particle_j_a_color, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(particle_j_a_color);
 
 		gl.drawArrays(gl.POINTS, 0, quantity_p_jet_plus + quantity_p_jet_minus);
 	}
@@ -264,13 +259,13 @@ var drawScene = function(replace)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(0);
+		gl.vertexAttribPointer(particle_a_pos, 4, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(particle_a_pos);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(1);
+		gl.vertexAttribPointer(particle_a_color, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(particle_a_color);
 
 		gl.drawArrays(gl.POINTS, 0, quantity_particles);
 	}
@@ -281,8 +276,8 @@ var drawScene = function(replace)
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, black_hole_size]), gl.STATIC_DRAW);
-	gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(0);
+	gl.vertexAttribPointer(black_hole_a_pos, 3, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(black_hole_a_pos);
 
 	gl.drawArrays(gl.POINTS, 0, 1);
 }

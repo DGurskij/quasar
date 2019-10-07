@@ -11,14 +11,9 @@
     <link rel="stylesheet" href="style.css">
     <title>Quasar</title>
   </head>
-  <body onload="{launch();}" style="margin: 0px;">
-    <section id="error">
-      Webgl 2.0 doesn't supported, try go to
-        <a href="old/index.html">OLD</a> version or change browser.<br>
-      Recommend: Chrome, Opera, Mozilla.
-    </section>
+  <body onload="{initShaders(); launch();}" style="margin: 0px;">
     <section id="panel">
-      <a href="old/index.html" style="">Old version 1.0</a>
+      <a href="../index.html" >Version 1.1</a>
       <input type="button" value="Pause" onclick="pause(this)">
       <label for="">Rotate X</label>
       <input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 0)" name="control_rotate">
@@ -33,9 +28,9 @@
 
     <!--Shaders for draw particles-->
 
-    <script id="particle-vertex-shader" type="notjs">#version 300 es
-      layout (location = 0) in vec4 a_position;
-      layout (location = 1) in vec3 a_color;
+    <script id="particle-vertex-shader" type="notjs">
+      attribute vec4 a_position;
+      attribute vec3 a_color;
 
       //global transform params
       uniform mat4 u_projection;
@@ -45,7 +40,7 @@
       uniform float u_distance;
       uniform float u_radius;
 
-      out vec4 v_color;
+      varying vec4 v_color;
 
       void main()
       {
@@ -62,9 +57,9 @@
 
     </script>
 
-    <script id="particle_J-vertex-shader" type="notjs">#version 300 es
-      layout (location = 0) in vec4 a_position;
-      layout (location = 1) in vec3 a_color;
+    <script id="particle_J-vertex-shader" type="notjs">
+      attribute vec4 a_position;
+      attribute vec3 a_color;
 
       //global transform params
       uniform mat4 u_projection;
@@ -74,7 +69,7 @@
       uniform float u_distance;
       uniform float u_max_h;
 
-      out vec4 v_color;
+      varying vec4 v_color;
 
       void main()
       {
@@ -100,13 +95,12 @@
 
     </script>
 
-    <script id="particle-fragment-shader" type="notjs">#version 300 es
+    <script id="particle-fragment-shader" type="notjs">
       precision mediump float;
 
       uniform float u_light;
 
-      in vec4 v_color;
-      out vec4 out_FragColor;
+      varying vec4 v_color;
 
       void main()
       {
@@ -115,7 +109,7 @@
           discard;
         }
 
-        out_FragColor = v_color * u_light;
+        gl_FragColor = v_color * u_light;
       }
 
     </script>
