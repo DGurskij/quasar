@@ -28,6 +28,8 @@ var p_min_x;
 
 //var p_add_step_j;
 
+var black_hole_size;
+
 var p_gen_offset;
 var p_generate_step;
 
@@ -91,6 +93,8 @@ var launch = function()
 	jets_max_z    = JETS_MAX_Z * c;
 	jets_start_x  = JETS_START_X * c;
 	jets_start_z  = JETS_START_Z * c;
+
+	black_hole_size = BLACK_HOLE_SIZE * c;
 
 	let radius = r;
 
@@ -265,6 +269,17 @@ var drawScene = function(replace)
 
 		gl.drawArrays(gl.POINTS, 0, quantity_particles);
 	}
+
+	gl.useProgram(black_hole_shader);
+
+	gl.uniform1f(black_hole_u_distance, distance);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, black_hole_size]), gl.STATIC_DRAW);
+	gl.vertexAttribPointer(black_hole_a_pos, 3, gl.FLOAT, false, 0, 0);
+	gl.enableVertexAttribArray(black_hole_a_pos);
+
+	gl.drawArrays(gl.POINTS, 0, 1);
 }
 
 var generateParticles = function(v)
@@ -285,7 +300,7 @@ var generateParticles = function(v)
 
 			size = MAX_SIZE - MIN_SIZE_MUL * disp;
 
-			d_color[2] = disp;
+			d_color[0] = disp;
 
 			let color = vecMulValue(vecSumVec(COLORS[k], d_color), 2.0 - disp);
 
@@ -300,20 +315,24 @@ var generateJetP = function()
 {
 	let angle;
 	let size;
+	let x;
+	let z;
 	let color;
 
-	for(let i = 0; i < 10; i++)
+	for(let i = 0; i < 12; i++)
 	{
 		x = random(jets_start_x - 10, jets_start_x + 10);
 		angle = random(0, PI_MUL_TWO);
-		size = random(3, 15);
+		size = random(3, 6);
+		z = -jets_start_z + random(0, 3);
 
-		jet_minus[quantity_p_jet_minus++] = new Particle(x, -jets_start_z, size, angle, [0.67, 0.87, angle / PI_DIV_TWO]);
+		jet_minus[quantity_p_jet_minus++] = new Particle(x, z, size, angle, [1.9 - angle / PI_MUL_TWO, 0.97, 0.1]);
 
 		x = random(jets_start_x - 10, jets_start_x + 10);
 		angle = random(0, PI_MUL_TWO);
-		size = random(3, 15);
+		size = random(3, 6);
+		z = jets_start_z + random(0, 3);
 
-		jet_plus[quantity_p_jet_plus++] = new Particle(x, jets_start_z, size, angle, [0.67, 0.87, angle / PI_DIV_TWO]);
+		jet_plus[quantity_p_jet_plus++] = new Particle(x, z, size, angle, [1.9 - angle / PI_MUL_TWO, 0.97, 0.1]);
 	}
 }
