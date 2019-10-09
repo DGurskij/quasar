@@ -10,7 +10,7 @@ const PI_MUL_TWO = Math.PI * 2;
 const DEGR_TO_RAD = Math.PI / 180;
 const RAD_TO_DEGR = 1 / DEGR_TO_RAD;
 
-const MAX_SIZE = 4.0;
+const MAX_SIZE = 5.0;
 const MIN_SIZE_MUL = 4;
 
 const QUANTITY_ARM = 2;

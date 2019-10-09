@@ -40,6 +40,9 @@ var jets_max_z;
 var jets_start_x;
 var jets_start_z;
 
+var progress;
+var progress_element;
+
 //Get Window params and Deploy Field
 var launch = function()
 {
@@ -47,6 +50,8 @@ var launch = function()
 	{
 		return 0;
 	}
+
+  progress_element = document.getElementById('progress');
 
 	projection = getProjectionMatrix(width, height, depth);
 
@@ -62,7 +67,6 @@ var launch = function()
 
 	distance = 1;
 
-	console.log("Engine start");
 	state = 1;
 
 	particles = [];
@@ -100,79 +104,58 @@ var launch = function()
 	jets_start_z  = JETS_START_Z * c;
 
 	black_hole_size = BLACK_HOLE_SIZE * c;
-
-	let radius = r;
-
-	while (radius > p_min_x)
-	{
-		generateParticles(radius);
-		radius -= p_generate_step;
-	}
-
-	engine = setInterval(animationEngine, 15);
 }
 
-//Do stars's lifecycle, gravity.
-function animationEngine()
+var generateModel = function()
 {
-	for (let i = 0; i < quantity_particles; i++)
+  progress = 0;
+  progress_element.style.display = "block";
+
+  let radius = r;
+	let stage = 10;
+
+	particles = [];
+	quantity_particles = 0;
+
+	lockPanel(true);
+
+	let gen = setInterval(function()
 	{
-		if(particles[i].x < p_min_x)
+		if(radius < p_min_x)
 		{
-			particles.splice(i--, 1);
-			quantity_particles--;
+			clearInterval(gen);
+			progress_element.value = 100;
+			lockPanel(false);
+			drawScene();
+			progress_element.style.display = "none";
 		}
 		else
 		{
-			particles[i].changePosition();
+			generateParticles(radius);
+			radius -= p_generate_step;
+
+			progress = (1 - radius / r) * 100;
+			progress_element.value = progress;
 		}
-	}
-
-	if(add_particle < 1)
-	{
-		add_particle += p_add_step;
-	}
-	else
-	{
-		generateParticles(r);
-		add_particle = 0;
-	}
-
-	for(let i = 0; i < quantity_p_jet_minus; i++)
-	{
-		jet_minus[i].z -= jets_move_z;
-		jet_minus[i].x += jets_p_move_x;
-		jet_minus[i].angle += jets_move_a;
-
-		if(jet_minus[i].z < -jets_max_z)
-		{
-			jet_minus.splice(i--, 1);
-			quantity_p_jet_minus--;
-		}
-	}
-
-	for(let i = 0; i < quantity_p_jet_plus; i++)
-	{
-		jet_plus[i].z += jets_move_z;
-		jet_plus[i].x += jets_p_move_x;
-		jet_plus[i].angle -= jets_move_a;
-
-		if(jet_plus[i].z > jets_max_z)
-		{
-			jet_plus.splice(i--, 1);
-			quantity_p_jet_plus--;
-		}
-	}
-
-	if(jets_time > 0)
-	{
-		generateJetP();
-		jets_time--;
-	}
-
-	drawScene();
+	}, 0);
 }
 
+var lockPanel = function(lock)
+{
+	let nodes = document.getElementById("panel").getElementsByTagName('*');
+
+	for(let i = 0; i < nodes.length; i++)
+	{
+		if(lock)
+		{
+    	nodes[i].disabled = true;
+		}
+		else
+		{
+			nodes[i].disabled = false;
+		}
+	 }
+}
 
 //Draw image using GPU and data calculated by CPU
 var drawScene = function(replace)
@@ -295,7 +278,7 @@ var generateParticles = function(v)
 
 	for(let k = 0; k < QUANTITY_ARM; k++)
 	{
-		for(let i = 0; i < QUANTITY_EL_GENERATE; i++)
+		for(let i = 0; i < 500; i++)
 		{
 			let d_angle = random(-PI_DIV_TWO, PI_DIV_TWO);
 			let z = Math.pow(-1, k) * random(-p_z_dispersion * 0.3, p_z_dispersion);
@@ -311,31 +294,5 @@ var generateParticles = function(v)
 		}
 
 		angle -= P_D_ALPHA;
-	}
-}
-
-var generateJetP = function()
-{
-	let angle;
-	let size;
-	let x;
-	let z;
-	let color;
-
-	for(let i = 0; i < 12; i++)
-	{
-		x = random(jets_start_x - 10, jets_start_x + 10);
-		angle = random(0, PI_MUL_TWO);
-		size = random(2, 4);
-		z = -jets_start_z + random(0, 3);
-
-		jet_minus[quantity_p_jet_minus++] = new Particle(x, z, size, angle, [1.9 - angle / PI_MUL_TWO, 0.97, 0.1]);
-
-		x = random(jets_start_x - 10, jets_start_x + 10);
-		angle = random(0, PI_MUL_TWO);
-		size = random(2, 4);
-		z = jets_start_z + random(0, 3);
-
-		jet_plus[quantity_p_jet_plus++] = new Particle(x, z, size, angle, [1.9 - angle / PI_MUL_TWO, 0.97, 0.1]);
 	}
 }
