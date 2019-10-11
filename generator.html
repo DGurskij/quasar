@@ -2,6 +2,7 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+    <link rel="icon" type="image/ico" href="page-ico.ico">
     <script type="text/javascript" src="constants.js"></script>
 		<script type="text/javascript" src="classes/Particle.js"></script>
     <script type="text/javascript" src="initShaders.js"></script>
@@ -59,7 +60,7 @@
         gl_Position = transform * vec4(x, y, a_position.y * a_position.x / u_radius, u_distance);
         gl_PointSize = a_position.z / u_distance;
 
-        v_color = vec4(a_color, 1.0) * pow((1.0 - a_position.x / u_radius), 0.3);
+        v_color = vec4(a_color, 1.0) * pow((1.0 - a_position.x / u_radius), 0.5);
       }
 
     </script>

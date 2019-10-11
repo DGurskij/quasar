@@ -177,6 +177,8 @@ function animationEngine()
 //Draw image using GPU and data calculated by CPU
 var drawScene = function(replace)
 {
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
 	/*--------Draw particles-------*/
 
 	if(quantity_p_jet_minus || quantity_p_jet_plus)
