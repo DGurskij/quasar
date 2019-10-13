@@ -43,6 +43,18 @@ var jets_start_z;
 var progress;
 var progress_element;
 
+var step_quantity;
+
+var points;
+var colors;
+var length;
+var offset;
+
+var vao_particles;
+var vbo_particles;
+
+var draw_quee;
+
 //Get Window params and Deploy Field
 var launch = function()
 {
@@ -50,6 +62,9 @@ var launch = function()
 	{
 		return 0;
 	}
+
+	vao_particles = gl.createVertexArray();
+	vbo_particles = gl.createBuffer();
 
   progress_element = document.getElementById('progress');
 
@@ -104,6 +119,8 @@ var launch = function()
 	jets_start_z  = JETS_START_Z * c;
 
 	black_hole_size = BLACK_HOLE_SIZE * c;
+
+	step_quantity = 10;
 }
 
 var generateModel = function()
@@ -117,6 +134,12 @@ var generateModel = function()
 	particles = [];
 	quantity_particles = 0;
 
+	points = [];
+	colors = [];
+	length = 0;
+	offset = 0;
+	draw_quee = 0;
+
 	lockPanel(true);
 
 	let gen = setInterval(function()
@@ -126,6 +149,19 @@ var generateModel = function()
 			clearInterval(gen);
 			progress_element.value = 100;
 			lockPanel(false);
+
+			gl.bindVertexArray(vao_particles);
+
+			gl.bindBuffer(gl.ARRAY_BUFFER, vbo_particles);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
+			gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 28, 0);
+			gl.enableVertexAttribArray(0);
+
+			gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 28, 16);
+			gl.enableVertexAttribArray(1);
+
+			gl.bindVertexArray(null);
+
 			drawScene();
 			progress_element.style.display = "none";
 		}
@@ -158,9 +194,9 @@ var lockPanel = function(lock)
 }
 
 //Draw image using GPU and data calculated by CPU
-var drawScene = function(replace)
+var drawScene = function()
 {
-	gl.clear(gl.COLOR_BUFFER_BIT);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	/*--------Draw particles-------*/
 
@@ -218,45 +254,19 @@ var drawScene = function(replace)
 		gl.drawArrays(gl.POINTS, 0, quantity_p_jet_plus + quantity_p_jet_minus);
 	}
 
-	if(quantity_particles != 0)
-	{
-		gl.useProgram(particle_shader);
+	gl.useProgram(particle_shader);
 
-		gl.uniform1f(particle_u_light, light);
-		gl.uniformMatrix4fv(particle_u_projection, false, projection);
-		gl.uniformMatrix4fv(particle_u_rotation_x, false, rotate_x);
-		gl.uniformMatrix4fv(particle_u_rotation_y, false, rotate_y);
-		gl.uniformMatrix4fv(particle_u_rotation_z, false, rotate_z);
-		gl.uniform1f(particle_u_distance, distance);
-		gl.uniform1f(particle_u_radius, r);
+	gl.uniform1f(particle_u_light, light);
+	gl.uniformMatrix4fv(particle_u_projection, false, projection);
+	gl.uniformMatrix4fv(particle_u_rotation_x, false, rotate_x);
+	gl.uniformMatrix4fv(particle_u_rotation_y, false, rotate_y);
+	gl.uniformMatrix4fv(particle_u_rotation_z, false, rotate_z);
+	gl.uniform1f(particle_u_distance, distance);
+	gl.uniform1f(particle_u_radius, r);
 
-		let points = [];
-		let colors = [];
-
-		for (let i = 0, k = 0, l = 0; i < quantity_particles; i++)
-		{
-			points[l++] = particles[i].x;
-			points[l++] = particles[i].z;
-			points[l++] = particles[i].size;
-			points[l++] = particles[i].angle;
-
-			colors[k++] = particles[i].color[0];
-			colors[k++] = particles[i].color[1];
-			colors[k++] = particles[i].color[2];
-		}
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(0);
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(1);
-
-		gl.drawArrays(gl.POINTS, 0, quantity_particles);
-	}
+	gl.bindVertexArray(vao_particles);
+	gl.drawArrays(gl.POINTS, 0, length);
+	gl.bindVertexArray(null);
 
 	gl.useProgram(black_hole_shader);
 
@@ -268,6 +278,8 @@ var drawScene = function(replace)
 	gl.enableVertexAttribArray(0);
 
 	gl.drawArrays(gl.POINTS, 0, 1);
+
+	draw_quee--;
 }
 
 var generateParticles = function(v)
@@ -275,12 +287,11 @@ var generateParticles = function(v)
 	let angle = PI_MUL_TWO;
 	let size;
 	let d_color = [0, 0, 0];
-
 	let alpha_offset = p_gen_offset * (r - v);
 
 	for(let k = 0; k < QUANTITY_ARM; k++)
 	{
-		for(let i = 0; i < 500; i++)
+		for(let i = 0; i < step_quantity; i++)
 		{
 			let d_angle = random(-PI_DIV_TWO, PI_DIV_TWO);
 			let z = Math.pow(-1, k) * random(-p_z_dispersion * 0.3, p_z_dispersion);
@@ -292,7 +303,16 @@ var generateParticles = function(v)
 
 			let color = vecMulValue(vecSumVec(COLORS[k], d_color), 2.0 - disp);
 
-			particles[quantity_particles++] = new Particle(v, z, size, angle + alpha_offset + d_angle, color);
+			points[offset++] = v;
+			points[offset++] = z;
+			points[offset++] = size;
+			points[offset++] = angle + alpha_offset + d_angle;
+
+			points[offset++] = color[0];
+			points[offset++] = color[1];
+			points[offset++] = color[2];
+
+			length++;
 		}
 
 		angle -= P_D_ALPHA;
