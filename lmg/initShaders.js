@@ -11,12 +11,10 @@ var black_hole_shader;
 // particle uniforms
 var particle_u_screen;
 var particle_u_light;
-var particle_u_projection;
-var particle_u_rotation_x;
-var particle_u_rotation_y;
-var particle_u_rotation_z;
+var particle_u_transform;
 var particle_u_distance;
 var particle_u_radius;
+var particle_u_color;
 
 // jet particles uniforms
 var particle_j_u_screen;
@@ -30,13 +28,13 @@ var particle_j_u_max_h;
 
 // black hole uniforms
 var black_hole_u_distance;
+var black_hole_u_color;
 
 // jet particles attributes
 var particle_j_a_pos;
 var particle_j_a_color;
 
-var black_hole_a_pos;
-
+var transformation;
 var projection;
 var rotate_x;
 var rotate_y;
@@ -79,15 +77,10 @@ var initShaders = function()
   particle_shader = createProgram(gl, vertexShader, fragmentShader);
 
   particle_u_light      = gl.getUniformLocation(particle_shader, "u_light");
-  particle_u_projection = gl.getUniformLocation(particle_shader, "u_projection");
-  particle_u_rotation_x = gl.getUniformLocation(particle_shader, "u_rotation_x");
-  particle_u_rotation_y = gl.getUniformLocation(particle_shader, "u_rotation_y");
-  particle_u_rotation_z = gl.getUniformLocation(particle_shader, "u_rotation_z");
+  particle_u_transform  = gl.getUniformLocation(particle_shader, "u_transform");
   particle_u_distance   = gl.getUniformLocation(particle_shader, "u_distance");
   particle_u_radius     = gl.getUniformLocation(particle_shader, "u_radius");
-
-  particle_a_pos   = gl.getAttribLocation(particle_shader, "a_position");
-  particle_a_color = gl.getAttribLocation(particle_shader, "a_color");
+  particle_u_color      = gl.getUniformLocation(particle_shader, "u_color");
 
   // prepare particle jet programm
   vertexShaderSource = document.getElementById("particle_J-vertex-shader").text;
@@ -110,7 +103,7 @@ var initShaders = function()
   particle_j_a_color = gl.getAttribLocation(particle_shader, "a_color");
 
   // prepare black hole programm
-  vertexShaderSource = document.getElementById("black_hole-vertex-shader").text;
+  vertexShaderSource = document.getElementById("simple-point-vertex-shader").text;
   fragmentShaderSource = document.getElementById("black_hole-fragment-shader").text;
 
   vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
@@ -119,8 +112,7 @@ var initShaders = function()
   black_hole_shader = createProgram(gl, vertexShader, fragmentShader);
 
   black_hole_u_distance = gl.getUniformLocation(black_hole_shader, "u_distance");
-
-  black_hole_a_pos = gl.getAttribLocation(black_hole_shader, "a_position");
+  black_hole_u_color    = gl.getUniformLocation(black_hole_shader, "u_color");
 
   position_buffer = gl.createBuffer();
   color_buffer = gl.createBuffer();

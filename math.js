@@ -99,7 +99,7 @@ var matrixMulMatrix = function(m1, m2)
 
 			for(let k = 0; k < 4; k++)
 			{
-					res[4 * i + j] += m1[4 * i + k] * m2[4 * j + i];
+					res[4 * i + j] += m1[4 * i + k] * m2[j + 4 * k];
 			}
 		}
 	}

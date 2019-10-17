@@ -37,6 +37,8 @@ var rotate = function(value, index)
 		rotate_x = getRotationX(v);
 	}
 
+  setTransformation();
+
   drawScene();
 }
 
@@ -52,5 +54,25 @@ var generateJet = function()
   if(jets_time == 0)
   {
     jets_time = JETS_TIME;
+  }
+}
+
+var hide = function()
+{
+  let panel = document.getElementById('panel');
+  let h     = document.getElementById('hide');
+
+  if(h.value == "<")
+  {
+    let width = panel.getBoundingClientRect().width;
+    let h_w   = h.getBoundingClientRect().width;
+
+    panel.style.left = -width + h_w + "px";
+    h.value = ">";
+  }
+  else
+  {
+    panel.style.left = "1%";
+    h.value = "<";
   }
 }

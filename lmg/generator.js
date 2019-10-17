@@ -45,15 +45,18 @@ var progress_element;
 
 var step_quantity;
 
+var quantity_arms;
+var arm_angle_step;
+var arm_angle_disp;
+
 var points;
-var colors;
 var length;
 var offset;
 
 var vao_particles;
 var vbo_particles;
 
-var draw_quee;
+var color = [];
 
 //Get Window params and Deploy Field
 var launch = function()
@@ -70,15 +73,26 @@ var launch = function()
 
 	projection = getProjectionMatrix(width, height, depth);
 
-	rotate_x = getRotationX(INIT_ANGLE_X);
-	rotate_y = getRotationY(INIT_ANGLE_Y);
-	rotate_z = getRotationZ(INIT_ANGLE_Z);
-
 	let rotate_controllers = document.getElementsByName('control_rotate');
+	let color_controllers  = document.getElementsByName('color');
+	let pre_processing = document.getElementsByName('pre-proc');
 
-	rotate_controllers[0].value = INIT_ANGLE_X * RAD_TO_DEGR;
-	rotate_controllers[1].value = INIT_ANGLE_Y * RAD_TO_DEGR;
-	rotate_controllers[2].value = INIT_ANGLE_Z * RAD_TO_DEGR;
+	quantity_arms = pre_processing[1].value;
+	step_quantity = pre_processing[0].value;
+
+	step_quantity /= quantity_arms;
+	arm_angle_step = PI_MUL_TWO / quantity_arms;
+	arm_angle_disp = PI / quantity_arms;
+
+	rotate_x = getRotationX(rotate_controllers[0].value * DEGR_TO_RAD);
+	rotate_y = getRotationY(rotate_controllers[1].value * DEGR_TO_RAD);
+	rotate_z = getRotationZ(rotate_controllers[2].value * DEGR_TO_RAD);
+
+	setTransformation();
+
+	color[0] = color_controllers[0].value;
+	color[1] = color_controllers[1].value;
+	color[2] = color_controllers[2].value;
 
 	distance = 1;
 
@@ -119,8 +133,6 @@ var launch = function()
 	jets_start_z  = JETS_START_Z * c;
 
 	black_hole_size = BLACK_HOLE_SIZE * c;
-
-	step_quantity = 10;
 }
 
 var generateModel = function()
@@ -138,7 +150,6 @@ var generateModel = function()
 	colors = [];
 	length = 0;
 	offset = 0;
-	draw_quee = 0;
 
 	lockPanel(true);
 
@@ -147,6 +158,7 @@ var generateModel = function()
 		if(radius < p_min_x)
 		{
 			clearInterval(gen);
+
 			progress_element.value = 100;
 			lockPanel(false);
 
@@ -154,13 +166,14 @@ var generateModel = function()
 
 			gl.bindBuffer(gl.ARRAY_BUFFER, vbo_particles);
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
-			gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 28, 0);
+			gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 20, 0);
 			gl.enableVertexAttribArray(0);
 
-			gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 28, 16);
+			gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 16);
 			gl.enableVertexAttribArray(1);
 
 			gl.bindVertexArray(null);
+			gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 			drawScene();
 			progress_element.style.display = "none";
@@ -175,6 +188,8 @@ var generateModel = function()
 		}
 	}, 0);
 }
+
+// lock controll panel when model processing
 
 var lockPanel = function(lock)
 {
@@ -193,12 +208,16 @@ var lockPanel = function(lock)
 	 }
 }
 
+var setTransformation = function()
+{
+	transformation = matrixMulMatrix(matrixMulMatrix(matrixMulMatrix(rotate_z, rotate_y), rotate_x), projection);
+}
+
 //Draw image using GPU and data calculated by CPU
+
 var drawScene = function()
 {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	/*--------Draw particles-------*/
 
 	if(quantity_p_jet_minus || quantity_p_jet_plus)
 	{
@@ -254,23 +273,24 @@ var drawScene = function()
 		gl.drawArrays(gl.POINTS, 0, quantity_p_jet_plus + quantity_p_jet_minus);
 	}
 
+	// draw particles
 	gl.useProgram(particle_shader);
 
 	gl.uniform1f(particle_u_light, light);
-	gl.uniformMatrix4fv(particle_u_projection, false, projection);
-	gl.uniformMatrix4fv(particle_u_rotation_x, false, rotate_x);
-	gl.uniformMatrix4fv(particle_u_rotation_y, false, rotate_y);
-	gl.uniformMatrix4fv(particle_u_rotation_z, false, rotate_z);
+	gl.uniformMatrix4fv(particle_u_transform, false, transformation);
 	gl.uniform1f(particle_u_distance, distance);
 	gl.uniform1f(particle_u_radius, r);
+	gl.uniform3fv(particle_u_color, color);
 
 	gl.bindVertexArray(vao_particles);
 	gl.drawArrays(gl.POINTS, 0, length);
 	gl.bindVertexArray(null);
 
+	// draw black_hole
 	gl.useProgram(black_hole_shader);
 
 	gl.uniform1f(black_hole_u_distance, distance);
+	gl.uniform3fv(black_hole_u_color, color);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, black_hole_size]), gl.STATIC_DRAW);
@@ -278,9 +298,9 @@ var drawScene = function()
 	gl.enableVertexAttribArray(0);
 
 	gl.drawArrays(gl.POINTS, 0, 1);
-
-	draw_quee--;
 }
+
+// generate functions for elements
 
 var generateParticles = function(v)
 {
@@ -288,33 +308,31 @@ var generateParticles = function(v)
 	let size;
 	let d_color = [0, 0, 0];
 	let alpha_offset = p_gen_offset * (r - v);
+	let dg = 0;
 
-	for(let k = 0; k < QUANTITY_ARM; k++)
+	for(let k = 0; k < quantity_arms; k++)
 	{
 		for(let i = 0; i < step_quantity; i++)
 		{
-			let d_angle = random(-PI_DIV_TWO, PI_DIV_TWO);
-			let z = Math.pow(-1, k) * random(-p_z_dispersion * 0.3, p_z_dispersion);
-			let disp = Math.abs(d_angle) / PI_DIV_TWO + Math.abs(Math.abs(z) - p_z_dispersion * 0.35) / p_z_dispersion / 0.35;
+			let d_angle = random(-arm_angle_disp, arm_angle_disp);
+			let z = random(-p_z_dispersion, p_z_dispersion);//Math.pow(-1, k) * random(-p_z_dispersion * 0.3, p_z_dispersion);
+			//let disp = Math.abs(d_angle) / PI_DIV_TWO + Math.abs(Math.abs(z) - p_z_dispersion * 0.35) / p_z_dispersion / 0.35;
+			let disp = Math.abs(d_angle) / PI * 3 + Math.abs(z) / p_z_dispersion;
 
-			size = MAX_SIZE - MIN_SIZE_MUL * disp;
+			size = MAX_SIZE - 5 * disp;
 
-			d_color[0] = disp;
-
-			let color = vecMulValue(vecSumVec(COLORS[k], d_color), 2.0 - disp);
+			//let color = vecMulValue(COLORS[k], 2.0 - disp);
 
 			points[offset++] = v;
 			points[offset++] = z;
 			points[offset++] = size;
 			points[offset++] = angle + alpha_offset + d_angle;
 
-			points[offset++] = color[0];
-			points[offset++] = color[1];
-			points[offset++] = color[2];
+			points[offset++] = 2.0 - disp;
 
 			length++;
 		}
 
-		angle -= P_D_ALPHA;
+		angle -= arm_angle_step;
 	}
 }

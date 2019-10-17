@@ -4,6 +4,7 @@ const COLORS =
 	[0.67, 0.87, 0.3]
 ];
 
+const PI         = Math.PI;
 const PI_DIV_TWO = Math.PI / 2;
 const PI_MUL_TWO = Math.PI * 2;
 
@@ -16,7 +17,7 @@ const MIN_SIZE_MUL = 4;
 const QUANTITY_ARM = 2;
 const QUANTITY_EL_GENERATE = 15;
 
-const P_Z_DISPERSION = 120;
+const P_Z_DISPERSION = 100;
 const P_MOVE_ANGLE = 0.00026;
 const P_MOVE_X = 0.02;
 
