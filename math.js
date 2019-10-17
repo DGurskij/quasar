@@ -57,6 +57,11 @@ var getRotationZ = function(a)
 	];
 }
 
+var setTransformation = function()
+{
+	transformation = matrixMulMatrix(matrixMulMatrix(matrixMulMatrix(rotate_z, rotate_y), rotate_x), projection);
+}
+
 /* vector operations */
 
 var vecSumVec = function(v1, v2)

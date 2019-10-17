@@ -40,10 +40,7 @@
       layout (location = 1) in vec3 a_color;
 
       //global transform params
-      uniform mat4 u_projection;
-      uniform mat4 u_rotation_x;
-      uniform mat4 u_rotation_y;
-      uniform mat4 u_rotation_z;
+      uniform mat4 u_transform;
       uniform float u_distance;
       uniform float u_radius;
 
@@ -54,12 +51,10 @@
         float x = a_position.x * cos(a_position.w);
         float y = a_position.x * sin(a_position.w);
 
-        mat4 transform = u_projection * u_rotation_x * u_rotation_y * u_rotation_z;
+        gl_Position = u_transform * vec4(x, y, a_position.y * a_position.x / u_radius, u_distance);
+        gl_PointSize = a_position.z * (1.5 - a_position.x / u_radius) / u_distance;
 
-        gl_Position = transform * vec4(x, y, a_position.y * a_position.x / u_radius, u_distance);
-        gl_PointSize = a_position.z / u_distance;
-
-        v_color = vec4(a_color, 1.0) * pow(1.0 - a_position.x / u_radius, 0.8);
+        v_color = vec4(a_color, 1.0) * pow(1.0 - a_position.x / u_radius, 0.5);
       }
 
     </script>
@@ -69,10 +64,7 @@
       layout (location = 1) in vec3 a_color;
 
       //global transform params
-      uniform mat4 u_projection;
-      uniform mat4 u_rotation_x;
-      uniform mat4 u_rotation_y;
-      uniform mat4 u_rotation_z;
+      uniform mat4 u_transform;
       uniform float u_distance;
       uniform float u_max_h;
 
@@ -84,9 +76,7 @@
         float x = a_position.x * cos(a_position.w);
         float y = a_position.x * sin(a_position.w);
 
-        mat4 transform = u_projection * u_rotation_x * u_rotation_y * u_rotation_z;
-
-        gl_Position = transform * vec4(x, y, a_position.y, u_distance);
+        gl_Position = u_transform * vec4(x, y, a_position.y, u_distance);
 
         gl_PointSize = a_position.z / u_distance;
 
@@ -122,8 +112,8 @@
 
     </script>
 
-    <script id="black_hole-vertex-shader" type="notjs">
-      attribute vec3 a_position;
+    <script id="black_hole-vertex-shader" type="notjs">#version 300 es
+      layout (location = 0) in vec3 a_position;
 
       uniform float u_distance;
 
@@ -135,22 +125,30 @@
 
     </script>
 
-    <script id="black_hole-fragment-shader" type="notjs">
-
+    <script id="black_hole-fragment-shader" type="notjs">#version 300 es
       precision mediump float;
 
-      uniform float u_light;
-
-      varying vec4 v_color;
+      out vec4 out_FragColor;
 
       void main()
       {
-        if(length(gl_PointCoord - 0.5) > 0.5)
+        vec3 color = vec3(1.0, 0.8, 0.2);
+        out_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+
+        float len = length(gl_PointCoord - 0.5);
+
+        if(len > 0.5)
         {
           discard;
         }
-
-        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        if(len > 0.33)
+        {
+          out_FragColor += vec4(color * pow(0.6 + len, 5.0), 0.0);
+        }
+        if(len > 0.45)
+        {
+          out_FragColor = vec4(color * pow(1.45 - len, 5.0), 1.0);
+        }
       }
 
     </script>

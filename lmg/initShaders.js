@@ -76,11 +76,11 @@ var initShaders = function()
 
   particle_shader = createProgram(gl, vertexShader, fragmentShader);
 
-  particle_u_light      = gl.getUniformLocation(particle_shader, "u_light");
-  particle_u_transform  = gl.getUniformLocation(particle_shader, "u_transform");
-  particle_u_distance   = gl.getUniformLocation(particle_shader, "u_distance");
-  particle_u_radius     = gl.getUniformLocation(particle_shader, "u_radius");
-  particle_u_color      = gl.getUniformLocation(particle_shader, "u_color");
+  particle_u_light     = gl.getUniformLocation(particle_shader, "u_light");
+  particle_u_transform = gl.getUniformLocation(particle_shader, "u_transform");
+  particle_u_distance  = gl.getUniformLocation(particle_shader, "u_distance");
+  particle_u_radius    = gl.getUniformLocation(particle_shader, "u_radius");
+  particle_u_color     = gl.getUniformLocation(particle_shader, "u_color");
 
   // prepare particle jet programm
   vertexShaderSource = document.getElementById("particle_J-vertex-shader").text;

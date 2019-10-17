@@ -1,6 +1,10 @@
 //Basic client function for play
 var particles;
 var quantity_particles;
+var offset;
+
+var vao_particles;
+var vbo_particles;
 
 var jet_minus;
 var quantity_p_jet_minus;
@@ -54,6 +58,8 @@ var launch = function()
 	rotate_y = getRotationY(INIT_ANGLE_Y);
 	rotate_z = getRotationZ(INIT_ANGLE_Z);
 
+	setTransformation();
+
 	let rotate_controllers = document.getElementsByName('control_rotate');
 
 	rotate_controllers[0].value = INIT_ANGLE_X * RAD_TO_DEGR;
@@ -74,8 +80,6 @@ var launch = function()
 	jet_plus = [];
 	quantity_p_jet_minus = 0;
 	quantity_p_jet_plus = 0;
-
-	add_particle = 0;
 
 	light = 1.0;
 	light_up = 0.0;
@@ -102,12 +106,29 @@ var launch = function()
 	black_hole_size = BLACK_HOLE_SIZE * c;
 
 	let radius = r;
+	offset = 0;
 
 	while (radius > p_min_x)
 	{
-		generateParticles(radius);
+		generateParticles(radius, false);
 		radius -= p_generate_step;
 	}
+
+	vao_particles = gl.createVertexArray();
+	vbo_particles = gl.createBuffer();
+
+	gl.bindVertexArray(vao_particles);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, vbo_particles);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(particles), gl.STATIC_DRAW);
+
+	gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 28, 0);
+	gl.enableVertexAttribArray(0);
+
+	gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 28, 16);
+	gl.enableVertexAttribArray(1);
+
+	gl.bindVertexArray(null);
 
 	engine = setInterval(animationEngine, 15);
 }
@@ -115,27 +136,31 @@ var launch = function()
 //Do stars's lifecycle, gravity.
 function animationEngine()
 {
+	let flag = 0;
+	let deleted_start = -1;
+
 	for (let i = 0; i < quantity_particles; i++)
 	{
-		if(particles[i].x < p_min_x)
+		if(particles[7 * i] < p_min_x)
 		{
-			particles.splice(i--, 1);
-			quantity_particles--;
+			if(!flag)
+			{
+				deleted_start = 7 * i;
+				flag = 1;
+			}
 		}
 		else
 		{
-			particles[i].changePosition();
+			particles[7 * i]     -= p_move_x;
+			particles[7 * i + 3] += p_move_angle;
 		}
 	}
 
-	if(add_particle < 1)
+	if(deleted_start != -1)
 	{
-		add_particle += p_add_step;
-	}
-	else
-	{
-		generateParticles(r);
-		add_particle = 0;
+		//particles.slice(deleted_start, 210);
+		//quantity_particles -= 30;
+		generateParticles(r, true, deleted_start);
 	}
 
 	for(let i = 0; i < quantity_p_jet_minus; i++)
@@ -179,17 +204,12 @@ var drawScene = function(replace)
 {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	/*--------Draw particles-------*/
-
 	if(quantity_p_jet_minus || quantity_p_jet_plus)
 	{
 		gl.useProgram(particle_j_shader);
 
 		gl.uniform1f(particle_j_u_light, light);
-		gl.uniformMatrix4fv(particle_j_u_projection, false, projection);
-		gl.uniformMatrix4fv(particle_j_u_rotation_x, false, rotate_x);
-		gl.uniformMatrix4fv(particle_j_u_rotation_y, false, rotate_y);
-		gl.uniformMatrix4fv(particle_j_u_rotation_z, false, rotate_z);
+		gl.uniformMatrix4fv(particle_j_u_transform, false, transformation);
 		gl.uniform1f(particle_j_u_distance, distance);
 		gl.uniform1f(particle_j_u_max_h, jets_max_z);
 
@@ -240,39 +260,17 @@ var drawScene = function(replace)
 		gl.useProgram(particle_shader);
 
 		gl.uniform1f(particle_u_light, light);
-		gl.uniformMatrix4fv(particle_u_projection, false, projection);
-		gl.uniformMatrix4fv(particle_u_rotation_x, false, rotate_x);
-		gl.uniformMatrix4fv(particle_u_rotation_y, false, rotate_y);
-		gl.uniformMatrix4fv(particle_u_rotation_z, false, rotate_z);
+		gl.uniformMatrix4fv(particle_u_transform, false, transformation);
 		gl.uniform1f(particle_u_distance, distance);
 		gl.uniform1f(particle_u_radius, r);
 
-		let points = [];
-		let colors = [];
+		gl.bindVertexArray(vao_particles);
 
-		for (let i = 0, k = 0, l = 0; i < quantity_particles; i++)
-		{
-			points[l++] = particles[i].x;
-			points[l++] = particles[i].z;
-			points[l++] = particles[i].size;
-			points[l++] = particles[i].angle;
-
-			colors[k++] = particles[i].color[0];
-			colors[k++] = particles[i].color[1];
-			colors[k++] = particles[i].color[2];
-		}
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(0);
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(1);
+		gl.bindBuffer(gl.ARRAY_BUFFER, vbo_particles);
+		gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(particles), 0);
 
 		gl.drawArrays(gl.POINTS, 0, quantity_particles);
+		gl.bindVertexArray(null);
 	}
 
 	gl.useProgram(black_hole_shader);
@@ -287,11 +285,12 @@ var drawScene = function(replace)
 	gl.drawArrays(gl.POINTS, 0, 1);
 }
 
-var generateParticles = function(v)
+var generateParticles = function(v, is_new, start_pos)
 {
 	let angle = PI_MUL_TWO;
 	let size;
 	let d_color = [0, 0, 0];
+	let start = start_pos;
 
 	let alpha_offset = p_gen_offset * (r - v);
 
@@ -300,8 +299,8 @@ var generateParticles = function(v)
 		for(let i = 0; i < QUANTITY_EL_GENERATE; i++)
 		{
 			let d_angle = random(-PI_DIV_TWO, PI_DIV_TWO);
-			let z = Math.pow(-1, k) * random(-p_z_dispersion * 0.3, p_z_dispersion);
-			let disp = Math.abs(d_angle) / PI_DIV_TWO + Math.abs(Math.abs(z) - p_z_dispersion * 0.35) / p_z_dispersion / 0.35;
+			let z = random(-p_z_dispersion, p_z_dispersion);
+			let disp = Math.abs(d_angle) / PI * 3 + Math.abs(z) / p_z_dispersion;
 
 			size = MAX_SIZE - MIN_SIZE_MUL * disp;
 
@@ -309,7 +308,30 @@ var generateParticles = function(v)
 
 			let color = vecMulValue(vecSumVec(COLORS[k], d_color), 2.0 - disp);
 
-			particles[quantity_particles++] = new Particle(v, z, size, angle + alpha_offset + d_angle, color);
+			if(!is_new)
+			{
+				particles[offset++] = v;
+				particles[offset++] = z;
+				particles[offset++] = size;
+				particles[offset++] = angle + alpha_offset + d_angle;
+
+				particles[offset++] = color[0];
+				particles[offset++] = color[1];
+				particles[offset++] = color[2];
+
+				quantity_particles++;
+			}
+			else
+			{
+				particles[start++] = v;
+				particles[start++] = z;
+				particles[start++] = size;
+				particles[start++] = angle + alpha_offset + d_angle;
+
+				particles[start++] = color[0];
+				particles[start++] = color[1];
+				particles[start++] = color[2];
+			}
 		}
 
 		angle -= P_D_ALPHA;

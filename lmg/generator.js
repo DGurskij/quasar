@@ -208,11 +208,6 @@ var lockPanel = function(lock)
 	 }
 }
 
-var setTransformation = function()
-{
-	transformation = matrixMulMatrix(matrixMulMatrix(matrixMulMatrix(rotate_z, rotate_y), rotate_x), projection);
-}
-
 //Draw image using GPU and data calculated by CPU
 
 var drawScene = function()

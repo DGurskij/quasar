@@ -15,7 +15,7 @@ const MAX_SIZE = 5.0;
 const MIN_SIZE_MUL = 4;
 
 const QUANTITY_ARM = 2;
-const QUANTITY_EL_GENERATE = 15;
+const QUANTITY_EL_GENERATE = 10;
 
 const P_Z_DISPERSION = 100;
 const P_MOVE_ANGLE = 0.00026;

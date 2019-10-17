@@ -11,20 +11,14 @@ var black_hole_shader;
 // particle uniforms
 var particle_u_screen;
 var particle_u_light;
-var particle_u_projection;
-var particle_u_rotation_x;
-var particle_u_rotation_y;
-var particle_u_rotation_z;
+var particle_u_transform;
 var particle_u_distance;
 var particle_u_radius;
 
 // jet particles uniforms
 var particle_j_u_screen;
 var particle_j_u_light;
-var particle_j_u_projection;
-var particle_j_u_rotation_x;
-var particle_j_u_rotation_y;
-var particle_j_u_rotation_z;
+var particle_j_u_transform;
 var particle_j_u_distance;
 var particle_j_u_max_h;
 
@@ -37,6 +31,7 @@ var particle_j_a_color;
 
 var black_hole_a_pos;
 
+var transformation;
 var projection;
 var rotate_x;
 var rotate_y;
@@ -78,13 +73,10 @@ var initShaders = function()
 
   particle_shader = createProgram(gl, vertexShader, fragmentShader);
 
-  particle_u_light      = gl.getUniformLocation(particle_shader, "u_light");
-  particle_u_projection = gl.getUniformLocation(particle_shader, "u_projection");
-  particle_u_rotation_x = gl.getUniformLocation(particle_shader, "u_rotation_x");
-  particle_u_rotation_y = gl.getUniformLocation(particle_shader, "u_rotation_y");
-  particle_u_rotation_z = gl.getUniformLocation(particle_shader, "u_rotation_z");
-  particle_u_distance   = gl.getUniformLocation(particle_shader, "u_distance");
-  particle_u_radius     = gl.getUniformLocation(particle_shader, "u_radius");
+  particle_u_light     = gl.getUniformLocation(particle_shader, "u_light");
+  particle_u_transform = gl.getUniformLocation(particle_shader, "u_transform");
+  particle_u_distance  = gl.getUniformLocation(particle_shader, "u_distance");
+  particle_u_radius    = gl.getUniformLocation(particle_shader, "u_radius");
 
   particle_a_pos   = gl.getAttribLocation(particle_shader, "a_position");
   particle_a_color = gl.getAttribLocation(particle_shader, "a_color");
@@ -98,13 +90,10 @@ var initShaders = function()
 
   particle_j_shader = createProgram(gl, vertexShader, fragmentShader);
 
-  particle_j_u_light      = gl.getUniformLocation(particle_j_shader, "u_light");
-  particle_j_u_projection = gl.getUniformLocation(particle_j_shader, "u_projection");
-  particle_j_u_rotation_x = gl.getUniformLocation(particle_j_shader, "u_rotation_x");
-  particle_j_u_rotation_y = gl.getUniformLocation(particle_j_shader, "u_rotation_y");
-  particle_j_u_rotation_z = gl.getUniformLocation(particle_j_shader, "u_rotation_z");
-  particle_j_u_distance   = gl.getUniformLocation(particle_j_shader, "u_distance");
-  particle_j_u_max_h      = gl.getUniformLocation(particle_j_shader, "u_max_h");
+  particle_j_u_light     = gl.getUniformLocation(particle_j_shader, "u_light");
+  particle_j_u_transform = gl.getUniformLocation(particle_j_shader, "u_transform");
+  particle_j_u_distance  = gl.getUniformLocation(particle_j_shader, "u_distance");
+  particle_j_u_max_h     = gl.getUniformLocation(particle_j_shader, "u_max_h");
 
   particle_j_a_pos   = gl.getAttribLocation(particle_shader, "a_position");
   particle_j_a_color = gl.getAttribLocation(particle_shader, "a_color");
