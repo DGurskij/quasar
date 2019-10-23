@@ -305,6 +305,7 @@ var generateParticles = function(v)
 	let alpha_offset = p_gen_offset * (r - v);
 	let dg = 0;
 
+
 	for(let k = 0; k < quantity_arms; k++)
 	{
 		for(let i = 0; i < step_quantity; i++)
@@ -312,7 +313,7 @@ var generateParticles = function(v)
 			let d_angle = random(-arm_angle_disp, arm_angle_disp);
 			let z = random(-p_z_dispersion, p_z_dispersion);//Math.pow(-1, k) * random(-p_z_dispersion * 0.3, p_z_dispersion);
 			//let disp = Math.abs(d_angle) / PI_DIV_TWO + Math.abs(Math.abs(z) - p_z_dispersion * 0.35) / p_z_dispersion / 0.35;
-			let disp = Math.abs(d_angle) / PI * 3 + Math.abs(z) / p_z_dispersion;
+			let disp = Math.abs(d_angle) / PI * quantity_arms + Math.abs(z) / p_z_dispersion;
 
 			size = MAX_SIZE - 5 * disp;
 
