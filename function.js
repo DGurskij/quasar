@@ -44,6 +44,12 @@ var jets_max_z;
 var jets_start_x;
 var jets_start_z;
 
+var arm_colors =
+[
+	[1.0, 1.0, 1.0],
+	[1.0, 1.0, 1.0]
+];
+
 //Get Window params and Deploy Field
 var launch = function()
 {
@@ -346,20 +352,20 @@ var generateJetP = function()
 	let z;
 	let color;
 
-	for(let i = 0; i < 12; i++)
+	for(let i = 0; i < 24; i++)
 	{
 		x = random(jets_start_x - 10, jets_start_x + 10);
 		angle = random(0, PI_MUL_TWO);
 		size = random(2, 4);
 		z = -jets_start_z + random(0, 3);
 
-		jet_minus[quantity_p_jet_minus++] = new Particle(x, z, size, angle, [1.9 - angle / PI_MUL_TWO, 0.97, 0.1]);
+		jet_minus[quantity_p_jet_minus++] = new Particle(x, z, size, angle, [1.9 - angle / PI_MUL_TWO, 0.97, 0.8]);
 
 		x = random(jets_start_x - 10, jets_start_x + 10);
 		angle = random(0, PI_MUL_TWO);
 		size = random(2, 4);
 		z = jets_start_z + random(0, 3);
 
-		jet_plus[quantity_p_jet_plus++] = new Particle(x, z, size, angle, [1.9 - angle / PI_MUL_TWO, 0.97, 0.1]);
+		jet_plus[quantity_p_jet_plus++] = new Particle(x, z, size, angle, [1.9 - angle / PI_MUL_TWO, 0.97, 0.8]);
 	}
 }

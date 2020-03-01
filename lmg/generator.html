@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <link rel="icon" type="image/ico" href="../page-ico.ico">
-    <script type="text/javascript" src="../constants.js"></script>
+    <script type="text/javascript" src="constants.js"></script>
     <script type="text/javascript" src="initShaders.js"></script>
     <script type="text/javascript" src="../math.js"></script>
 		<script type="text/javascript" src="generator.js"></script>
@@ -24,36 +24,40 @@
       <button class="hide-btn" type="button" name="button" onclick="hideBlock(this, 0)">Pre processing&#9650;</button>
       <section name="hide-block">
         <label for="">Density</label>
-        <input type="range" min="20" max="1000" value="250" step="5" oninput="changeDensity(this.value)" name="pre-proc">
+        <input type="range" min="50" max="1500" value="250" step="5" oninput="changeDensity(this.value)" name="pre-proc">
         <label for="">Quantity arm</label>
-        <input type="range" min="1" max="10" value="2" step="1" oninput="changeQuantityArms(this.value)" name="pre-proc">
+        <input type="range" min="2" max="4" value="2" step="1" oninput="changeQuantityArms(this.value)" name="pre-proc">
       </section>
 
       <button class="hide-btn" type="button" name="button" onclick="hideBlock(this, 1)">Rotate and distance&#9650;</button>
       <section name=hide-block>
         <label for="">Rotate X</label>
-        <input type="range" min="0" max="360" value="251" step="1" oninput="rotate(this.value, 0)" name="control_rotate">
+        <input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 0)" name="control_rotate">
         <label for="">Rotate Y</label>
-        <input type="range" min="0" max="360" value="13" step="1" oninput="rotate(this.value, 1)" name="control_rotate">
+        <input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 1)" name="control_rotate">
         <label for="">Rotate Z</label>
         <input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 2)" name="control_rotate">
         <label for="">Distance</label>
-        <input type="range" min="0.5" max="2" value="1" step="0.01" oninput="forward(this.value)">
+        <input type="range" min="0.75" max="3" value="2.2" step="0.01" oninput="forward(this.value)">
       </section>
 
       <button class="hide-btn" type="button" name="button" onclick="hideBlock(this, 2)">Color&#9650;</button>
       <section name="hide-block">
         <label for="">Red</label>
-        <input type="range" name="color" min="-1" max="1" value="1.0" step="0.005" oninput="changeColor(this.value, 0)">
+        <input type="range" name="color" min="0" max="1" value="0.5" step="0.005" oninput="changeColor(this.value, 0)">
         <label for="">Green</label>
-        <input type="range" name="color" min="-1" max="1" value="1.0" step="0.005" oninput="changeColor(this.value, 1)">
+        <input type="range" name="color" min="0" max="1" value="0.5" step="0.005" oninput="changeColor(this.value, 1)">
         <label for="">Blue</label>
-        <input type="range" name="color" min="-1" max="1" value="1.0" step="0.005" oninput="changeColor(this.value, 2)">
+        <input type="range" name="color" min="0" max="1" value="0.5" step="0.005" oninput="changeColor(this.value, 2)">
       </section>
       <input id="hide" type="button" name="" value="<" onclick="hide()">
     </section>
+    <section style="position: fixed; right: 0px; top: 10px; color: white; font-size: 2em;">
+      <span id="q_elements"></span><br>
+      <span id="q_values"></span><br>
+      <span id="draw_time"></span>
+    </section>
     <section>
-    <progress id="progress" value="0" max="100"></progress>
     <canvas id="area" onclick="generateJet()"></canvas>
 
     <!--Shaders for draw particles-->
@@ -75,8 +79,8 @@
         float x = a_position.x * cos(a_position.w);
         float y = a_position.x * sin(a_position.w);
 
-        gl_Position = u_transform * vec4(x, y, a_position.y * a_position.x / u_radius, u_distance);
-        gl_PointSize = a_position.z * (1.5 - a_position.x / u_radius) / u_distance;
+        gl_Position = u_transform * vec4(x, y, a_position.y * pow(a_position.x / u_radius, 0.5), u_distance);
+        gl_PointSize = a_position.z / u_distance;
 
         v_color = vec4(a_color * u_color, 1.0) * pow((1.0 - a_position.x / u_radius), 0.3);
       }

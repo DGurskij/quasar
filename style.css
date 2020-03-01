@@ -126,46 +126,6 @@ input[type=range]::-moz-range-thumb {
 	width: 100%;
 }
 
-#progress {
-	-webkit-appearance: none;
-	-ms-appearance: none;
-	-moz-appearance: none;
-	position: fixed;
-	left: 30%;
-	width: 40%;
-	top: 45%;
-	height: 10%;
-	text-align: center;
-	display: none;
-}
-
-#progress::-ms-progress-bar {
-	background-color: rgba(200, 200, 200, 0.7);
-	border-radius: 10px;
-	padding: 3px;
-}
-
-#progress::-ms-progress-value {
-	background-color: green;
-	border-radius: 10px;
-}
-
-#progress::-moz-progress-bar {
-	background-color: rgba(0, 128, 0, 1.0);
-	padding: 3px;
-}
-
-#progress::-webkit-progress-value {
-	background-color: green;
-	border-radius: 10px;
-}
-
-#progress::-webkit-progress-bar {
-	background-color: rgba(200, 200, 200, 0.7);
-	border-radius: 10px;
-	padding: 3px;
-}
-
 #hide {
 	position: absolute;
 	width: auto;

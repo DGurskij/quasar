@@ -40,9 +40,6 @@ var jets_max_z;
 var jets_start_x;
 var jets_start_z;
 
-var progress;
-var progress_element;
-
 var step_quantity;
 
 var quantity_arms;
@@ -58,6 +55,8 @@ var vbo_particles;
 
 var color = [];
 
+var busy = false;
+
 //Get Window params and Deploy Field
 var launch = function()
 {
@@ -69,13 +68,11 @@ var launch = function()
 	vao_particles = gl.createVertexArray();
 	vbo_particles = gl.createBuffer();
 
-  progress_element = document.getElementById('progress');
-
 	projection = getProjectionMatrix(width, height, depth);
 
 	let rotate_controllers = document.getElementsByName('control_rotate');
 	let color_controllers  = document.getElementsByName('color');
-	let pre_processing = document.getElementsByName('pre-proc');
+	let pre_processing     = document.getElementsByName('pre-proc');
 
 	quantity_arms = pre_processing[1].value;
 	step_quantity = pre_processing[0].value;
@@ -94,7 +91,7 @@ var launch = function()
 	color[1] = color_controllers[1].value;
 	color[2] = color_controllers[2].value;
 
-	distance = 1;
+	distance = 1.8;
 
 	state = 1;
 
@@ -113,8 +110,8 @@ var launch = function()
 	light = 1.0;
 	light_up = 0.0;
 
-	r = gl.drawingBufferHeight / 1.25;
-	c = r / 600;
+	r = gl.drawingBufferWidth;
+	c = r / 1920;
 
 	p_move_x     = P_MOVE_X / c;
 	p_move_angle = P_MOVE_ANGLE / c;
@@ -137,12 +134,6 @@ var launch = function()
 
 var generateModel = function()
 {
-  progress = 0;
-  progress_element.style.display = "block";
-
-  let radius = r;
-	let stage = 10;
-
 	particles = [];
 	quantity_particles = 0;
 
@@ -151,122 +142,44 @@ var generateModel = function()
 	length = 0;
 	offset = 0;
 
-	lockPanel(true);
-
-	let gen = setInterval(function()
+	for(let i = 0; i < quantity_arms; i++)
 	{
-		if(radius < p_min_x)
-		{
-			clearInterval(gen);
+		generateParticles(i);
+	}
 
-			progress_element.value = 100;
-			lockPanel(false);
+	document.getElementById('q_elements').textContent = "Quantity elements: " + length;
+	document.getElementById('q_values').textContent   = "Quantity values: " + points.length;
 
-			gl.bindVertexArray(vao_particles);
+	gl.bindVertexArray(vao_particles);
 
-			gl.bindBuffer(gl.ARRAY_BUFFER, vbo_particles);
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
-			gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 20, 0);
-			gl.enableVertexAttribArray(0);
+	gl.bindBuffer(gl.ARRAY_BUFFER, vbo_particles);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
+	gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 20, 0);
+	gl.enableVertexAttribArray(0);
 
-			gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 16);
-			gl.enableVertexAttribArray(1);
+	gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 20, 16);
+	gl.enableVertexAttribArray(1);
 
-			gl.bindVertexArray(null);
-			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+	gl.bindVertexArray(null);
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-			drawScene();
-			progress_element.style.display = "none";
-		}
-		else
-		{
-			generateParticles(radius);
-			radius -= p_generate_step;
-
-			progress = (1 - radius / r) * 100;
-			progress_element.value = progress;
-		}
-	}, 0);
-}
-
-// lock controll panel when model processing
-
-var lockPanel = function(lock)
-{
-	let nodes = document.getElementById("panel").getElementsByTagName('*');
-
-	for(let i = 0; i < nodes.length; i++)
-	{
-		if(lock)
-		{
-    	nodes[i].disabled = true;
-		}
-		else
-		{
-			nodes[i].disabled = false;
-		}
-	 }
+	drawScene();
 }
 
 //Draw image using GPU and data calculated by CPU
 
 var drawScene = function()
 {
+	if(busy)
+	{
+		return;
+	}
+
+	busy = true;
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	if(quantity_p_jet_minus || quantity_p_jet_plus)
-	{
-		gl.useProgram(particle_j_shader);
-
-		gl.uniform1f(particle_j_u_light, light);
-		gl.uniformMatrix4fv(particle_j_u_projection, false, projection);
-		gl.uniformMatrix4fv(particle_j_u_rotation_x, false, rotate_x);
-		gl.uniformMatrix4fv(particle_j_u_rotation_y, false, rotate_y);
-		gl.uniformMatrix4fv(particle_j_u_rotation_z, false, rotate_z);
-		gl.uniform1f(particle_j_u_distance, distance);
-		gl.uniform1f(particle_j_u_max_h, jets_max_z);
-
-		let points = [];
-		let colors = [];
-		let k = 0;
-		let l = 0;
-
-		for (let i = 0; i < quantity_p_jet_minus; i++)
-		{
-			points[l++] = jet_minus[i].x;
-			points[l++] = jet_minus[i].z;
-			points[l++] = jet_minus[i].size;
-			points[l++] = jet_minus[i].angle;
-
-			colors[k++] = jet_minus[i].color[0];
-			colors[k++] = jet_minus[i].color[1];
-			colors[k++] = jet_minus[i].color[2];
-		}
-
-		for (let i = 0; i < quantity_p_jet_plus; i++)
-		{
-			points[l++] = jet_plus[i].x;
-			points[l++] = jet_plus[i].z;
-			points[l++] = jet_plus[i].size;
-			points[l++] = jet_plus[i].angle;
-
-			colors[k++] = jet_plus[i].color[0];
-			colors[k++] = jet_plus[i].color[1];
-			colors[k++] = jet_plus[i].color[2];
-		}
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(0);
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-		gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(1);
-
-		gl.drawArrays(gl.POINTS, 0, quantity_p_jet_plus + quantity_p_jet_minus);
-	}
+	let t1 = performance.now();
+	let t2;
 
 	// draw particles
 	gl.useProgram(particle_shader);
@@ -293,33 +206,138 @@ var drawScene = function()
 	gl.enableVertexAttribArray(0);
 
 	gl.drawArrays(gl.POINTS, 0, 1);
+
+	t2 = ((performance.now() - t1) + "").substr(0, 5);
+
+	document.getElementById("draw_time").textContent = "Draw time: " + t2 + "ms";
+
+	busy = false;
 }
 
 // generate functions for elements
 
-var generateParticles = function(v)
+var generateParticles = function(k)
 {
-	let angle = PI_MUL_TWO;
+	let polar_r = r;
+	let angle = PI_MUL_TWO - arm_angle_step * k;
 	let size;
 	let d_color = [0, 0, 0];
-	let alpha_offset = p_gen_offset * (r - v);
+	let alpha_offset = 0;//p_gen_offset * (r - polar_r);
 	let dg = 0;
 
+	let arm_height = 0.5 * p_z_dispersion;
+	let h_step = Math.floor(random(50, 100));
+	let h_dir  = random(-arm_height * 0.002, arm_height * 0.002);
 
-	for(let k = 0; k < quantity_arms; k++)
+	let arm_width  = 0.5 * arm_angle_disp;
+	let w_step = Math.floor(random(50, 100));
+	let w_dir  = random(-arm_angle_disp * 0.002, arm_angle_disp * 0.002);
+
+	let quantity_step = 0;
+
+	while(polar_r > p_min_x)
 	{
-		for(let i = 0; i < step_quantity; i++)
+		/*let limit = 1 - polar_r / r;
+
+		// randomize arms width
+		if(arm_width < arm_angle_disp * 0.3)
 		{
-			let d_angle = random(-arm_angle_disp, arm_angle_disp);
-			let z = random(-p_z_dispersion, p_z_dispersion);//Math.pow(-1, k) * random(-p_z_dispersion * 0.3, p_z_dispersion);
-			//let disp = Math.abs(d_angle) / PI_DIV_TWO + Math.abs(Math.abs(z) - p_z_dispersion * 0.35) / p_z_dispersion / 0.35;
-			let disp = Math.abs(d_angle) / PI * quantity_arms + Math.abs(z) / p_z_dispersion;
+			w_step = Math.floor(random(50, 100));
+			w_dir = random(arm_angle_disp * 0.001, arm_angle_disp * 0.002);
+		}
+		else if (arm_width > arm_angle_disp * 0.8)
+		{
+			w_step = Math.floor(random(50, 100));
+			w_dir = random(-arm_angle_disp * 0.001, -arm_angle_disp * 0.002);
+		}
+		else
+		{
+			arm_width += w_dir;
+		}
 
-			size = MAX_SIZE - 5 * disp;
+		if(w_step-- < 0)
+		{
+			w_step = Math.floor(random(50, 100));
 
-			//let color = vecMulValue(COLORS[k], 2.0 - disp);
+			if(arm_width < arm_angle_disp * 0.2)
+			{
+				w_dir = random(arm_angle_disp * 0.001, arm_angle_disp * 0.002);
+			}
+			else if (arm_width > arm_angle_disp * 0.8)
+			{
+				w_dir =random(-arm_angle_disp * 0.001, -arm_angle_disp * 0.002);
+			}
+			else
+			{
+				w_dir = random(-arm_angle_disp * 0.001, arm_angle_disp * 0.001);
+			}
+		}
 
-			points[offset++] = v;
+		// randomize arms height
+		if(arm_height < p_z_dispersion * 0.5)
+		{
+			h_step = Math.floor(random(50, 100));
+			h_dir = random(p_z_dispersion * 0.001, p_z_dispersion * 0.002);
+		}
+		else if (arm_height > p_z_dispersion)
+		{
+			h_step = Math.floor(random(50, 100));
+			h_dir = random(-p_z_dispersion * 0.001, -p_z_dispersion * 0.002);
+		}
+		else
+		{
+			arm_height += h_dir;
+		}
+
+		if(h_step-- < 0)
+		{
+			h_step = Math.floor(random(50, 100));
+
+			if(arm_height < p_z_dispersion * 0.5)
+			{
+				h_dir = random(p_z_dispersion * 0.001, p_z_dispersion * 0.002);
+			}
+			else if (arm_height > p_z_dispersion)
+			{
+				h_dir = random(-p_z_dispersion * 0.001, -p_z_dispersion * 0.002);
+			}
+			else
+			{
+				h_dir = random(-p_z_dispersion * 0.001, p_z_dispersion * 0.001);
+			}
+		}
+
+		let flag = 0;
+
+		if(polar_r < 0.2 * r)
+		{
+			flag = 1;
+		}*/
+
+		let d_angle = -arm_angle_disp * 1.5;
+		let z;
+		let offset_angle = random(arm_angle_disp / step_quantity * 10, arm_angle_disp / step_quantity * 50);
+
+		while(d_angle < arm_angle_disp * 1.5)
+		{
+			let abs_angle = Math.abs(d_angle);
+			let abs_z = Math.abs(z);
+			let disp = abs_angle / arm_angle_disp + abs_z / p_z_dispersion;
+
+			/*if(abs_angle < arm_width)
+			{
+				if(abs_z < arm_height)
+				{
+					disp -= (arm_height - abs_z) / arm_height;
+					disp -= (arm_width - abs_angle) / (arm_width);
+				}
+			}*/
+
+			size = MAX_SIZE - 2 * disp;
+
+			z = random(0, p_z_dispersion * Math.pow(1 - Math.abs(d_angle) / arm_angle_disp, 0.5));
+
+			points[offset++] = polar_r;
 			points[offset++] = z;
 			points[offset++] = size;
 			points[offset++] = angle + alpha_offset + d_angle;
@@ -327,8 +345,22 @@ var generateParticles = function(v)
 			points[offset++] = 2.0 - disp;
 
 			length++;
+
+			z = random(0, -p_z_dispersion * Math.pow(1 - Math.abs(d_angle) / arm_angle_disp, 0.5));
+
+			points[offset++] = polar_r;
+			points[offset++] = z;
+			points[offset++] = size;
+			points[offset++] = angle + alpha_offset + d_angle;
+
+			points[offset++] = 2.0 - disp;
+
+			length++;
+
+			d_angle += offset_angle;
 		}
 
-		angle -= arm_angle_step;
+		alpha_offset += p_gen_offset * p_generate_step;
+		polar_r -= p_generate_step;
 	}
 }
