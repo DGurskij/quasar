@@ -2,12 +2,6 @@
 var particles;
 var quantity_particles;
 
-var jet_minus;
-var quantity_p_jet_minus;
-var jet_plus;
-var quantity_p_jet_plus;
-var jets_time;
-
 var state = 0;
 
 var add_particle;
@@ -32,13 +26,6 @@ var black_hole_size;
 
 var p_gen_offset;
 var p_generate_step;
-
-var jets_p_move_x;
-var jets_move_z;
-var jets_move_a;
-var jets_max_z;
-var jets_start_x;
-var jets_start_z;
 
 var step_quantity;
 
@@ -96,21 +83,28 @@ var launch = function()
 	state = 1;
 
 	particles = [];
-	flashes = [];
 	quantity_particles = 0;
-	quantity_flashes = flashes.length;
-	jets_time = 0;
-	jet_minus = [];
-	jet_plus = [];
-	quantity_p_jet_minus = 0;
-	quantity_p_jet_plus = 0;
 
 	add_particle = 0;
 
-	light = 1.0;
-	light_up = 0.0;
+	calcGeneratorSettings();
+}
 
-	r = gl.drawingBufferWidth;
+var calcGeneratorSettings = function()
+{
+	let canvas = document.getElementById('area');
+
+	width = canvas.width = document.body.clientWidth;
+	height = canvas.height = document.body.clientHeight;
+	depth = width + height;
+
+	projection = getProjectionMatrix(width, height, depth);
+
+	setTransformation();
+
+	gl.viewport(0, 0, width, height);
+
+	r = width / 2.5;
 	c = r / 1920;
 
 	p_move_x     = P_MOVE_X / c;
@@ -122,18 +116,16 @@ var launch = function()
 	p_z_dispersion  = P_Z_DISPERSION * c;
 	p_min_x         = P_MIN_X * c;
 
-	jets_p_move_x = JETS_MOVE_X * c;
-	jets_move_z   = JETS_MOVE_Z * c;
-	jets_move_a   = JETS_MOVE_A * c;
-	jets_max_z    = JETS_MAX_Z * c;
-	jets_start_x  = JETS_START_X * c;
-	jets_start_z  = JETS_START_Z * c;
-
 	black_hole_size = BLACK_HOLE_SIZE * c;
 }
 
 var generateModel = function()
 {
+	let t1 = performance.now();
+	let t2;
+
+	calcGeneratorSettings();
+
 	particles = [];
 	quantity_particles = 0;
 
@@ -163,6 +155,10 @@ var generateModel = function()
 	gl.bindVertexArray(null);
 	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
+	t2 = ((performance.now() - t1) + "").substr(0, 5);
+
+	document.getElementById('gen_time').textContent = "Generate time: " + t2 + "ms";
+
 	drawScene();
 }
 
@@ -184,10 +180,8 @@ var drawScene = function()
 	// draw particles
 	gl.useProgram(particle_shader);
 
-	gl.uniform1f(particle_u_light, light);
 	gl.uniformMatrix4fv(particle_u_transform, false, transformation);
 	gl.uniform1f(particle_u_distance, distance);
-	gl.uniform1f(particle_u_radius, r);
 	gl.uniform3fv(particle_u_color, color);
 
 	gl.bindVertexArray(vao_particles);
@@ -333,27 +327,27 @@ var generateParticles = function(k)
 				}
 			}*/
 
-			size = MAX_SIZE - 2 * disp;
+			size = MAX_SIZE - MIN_SIZE_MUL * disp;
 
 			z = random(0, p_z_dispersion * Math.pow(1 - Math.abs(d_angle) / arm_angle_disp, 0.5));
 
 			points[offset++] = polar_r;
-			points[offset++] = z;
+			points[offset++] = z * Math.pow(polar_r / r, 0.5);
 			points[offset++] = size;
 			points[offset++] = angle + alpha_offset + d_angle;
 
-			points[offset++] = 2.0 - disp;
+			points[offset++] = (2.0 - disp) * Math.pow(1 - polar_r / r, 0.8);
 
 			length++;
 
 			z = random(0, -p_z_dispersion * Math.pow(1 - Math.abs(d_angle) / arm_angle_disp, 0.5));
 
 			points[offset++] = polar_r;
-			points[offset++] = z;
+			points[offset++] = z * Math.pow(polar_r / r, 0.5);
 			points[offset++] = size;
 			points[offset++] = angle + alpha_offset + d_angle;
 
-			points[offset++] = 2.0 - disp;
+			points[offset++] = (2.0 - disp) * Math.pow(1 - polar_r / r, 0.8);
 
 			length++;
 

@@ -28,13 +28,17 @@ input {
 
 #panel a {
 	text-align: center;
-	font-size: 24px;
+	font-size: 2em;
 	color: white;
 	background-color: rgb(0, 128, 0);
 	margin-bottom: 5px;
 	text-decoration: none;
 	border-radius: 5px;
 	width: 98%;
+}
+
+#panel label {
+	font-size: 1.5em;
 }
 
 input[type=button] {
@@ -118,7 +122,7 @@ input[type=range]::-moz-range-thumb {
 }
 #error {
 	display: none;
-	font-size: 32px;
+	font-size: 2em;
 	position: fixed;
 	text-align: center;
 	top: 40%;
@@ -138,7 +142,7 @@ input[type=range]::-moz-range-thumb {
 	margin-top: 5px;
 	margin-bottom: 5px;
 	width: 98%;
-	font-size: 18px;
+	font-size: 1.2em;
 	background-color: green;
 	outline: none;
 	font-weight: bold;

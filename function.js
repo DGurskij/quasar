@@ -17,6 +17,7 @@ var state = 0;
 var add_particle;
 
 var light;
+var jet_light;
 var light_up;
 
 var engine = 0;
@@ -43,12 +44,6 @@ var jets_move_a;
 var jets_max_z;
 var jets_start_x;
 var jets_start_z;
-
-var arm_colors =
-[
-	[1.0, 1.0, 1.0],
-	[1.0, 1.0, 1.0]
-];
 
 //Get Window params and Deploy Field
 var launch = function()
@@ -88,9 +83,10 @@ var launch = function()
 	quantity_p_jet_plus = 0;
 
 	light = 1.0;
+	jet_light = 1.0;
 	light_up = 0.0;
 
-	r = gl.drawingBufferHeight / 1.25;
+	r = width / 2.5;
 	c = r / 600;
 
 	p_move_x     = P_MOVE_X / c;
@@ -164,8 +160,6 @@ function animationEngine()
 
 	if(deleted_start != -1)
 	{
-		//particles.slice(deleted_start, 210);
-		//quantity_particles -= 30;
 		generateParticles(r, true, deleted_start);
 	}
 
@@ -197,8 +191,22 @@ function animationEngine()
 
 	if(jets_time > 0)
 	{
+		jet_light = 1;
 		generateJetP();
 		jets_time--;
+	}
+	else
+	{
+		jet_light -= 0.025;
+
+		if(jet_light < 0)
+		{
+			quantity_p_jet_plus = 0;
+			quantity_p_jet_minus = 0;
+
+			jet_plus  = [];
+			jet_minus = [];
+		}
 	}
 
 	drawScene();
@@ -214,7 +222,7 @@ var drawScene = function(replace)
 	{
 		gl.useProgram(particle_j_shader);
 
-		gl.uniform1f(particle_j_u_light, light);
+		gl.uniform1f(particle_j_u_light, jet_light);
 		gl.uniformMatrix4fv(particle_j_u_transform, false, transformation);
 		gl.uniform1f(particle_j_u_distance, distance);
 		gl.uniform1f(particle_j_u_max_h, jets_max_z);
@@ -352,20 +360,20 @@ var generateJetP = function()
 	let z;
 	let color;
 
-	for(let i = 0; i < 24; i++)
+	for(let i = 0; i < 30; i++)
 	{
 		x = random(jets_start_x - 10, jets_start_x + 10);
 		angle = random(0, PI_MUL_TWO);
-		size = random(2, 4);
+		size = random(1, 3);
 		z = -jets_start_z + random(0, 3);
 
-		jet_minus[quantity_p_jet_minus++] = new Particle(x, z, size, angle, [1.9 - angle / PI_MUL_TWO, 0.97, 0.8]);
+		jet_minus[quantity_p_jet_minus++] = new Particle(x, z, size, angle, [0, 1.4 - angle / PI_MUL_TWO, 1]);
 
 		x = random(jets_start_x - 10, jets_start_x + 10);
 		angle = random(0, PI_MUL_TWO);
-		size = random(2, 4);
+		size = random(1, 3);
 		z = jets_start_z + random(0, 3);
 
-		jet_plus[quantity_p_jet_plus++] = new Particle(x, z, size, angle, [1.9 - angle / PI_MUL_TWO, 0.97, 0.8]);
+		jet_plus[quantity_p_jet_plus++] = new Particle(x, z, size, angle, [0, 1.4 - angle / PI_MUL_TWO, 1]);
 	}
 }

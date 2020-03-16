@@ -12,7 +12,7 @@ const DEGR_TO_RAD = Math.PI / 180;
 const RAD_TO_DEGR = 1 / DEGR_TO_RAD;
 
 const MAX_SIZE = 5.5;
-const MIN_SIZE_MUL = 4;
+const MIN_SIZE_MUL = 4.5;
 
 const QUANTITY_ARM = 2;
 const QUANTITY_EL_GENERATE = 20;
@@ -36,8 +36,8 @@ const INIT_ANGLE_Z = 0;
 const JETS_TIME = 800;
 const JETS_START_X = 5;
 const JETS_START_Z = BLACK_HOLE_SIZE / 2 + 2;
-const JETS_MAX_Z = 900;
+const JETS_MAX_Z = 800;
 
-const JETS_MOVE_Z = 4.9;
-const JETS_MOVE_X = 0.3;
-const JETS_MOVE_A = 0.15;
+const JETS_MOVE_Z = 3.9;
+const JETS_MOVE_X = 0.2;
+const JETS_MOVE_A = 0.01;

@@ -46,8 +46,8 @@ var initShaders = function()
 {
   let canvas = document.getElementById('area');
 
-  width = canvas.width = screen.availWidth;
-  height = canvas.height = screen.availHeight * 0.9;
+  width = canvas.width = document.body.clientWidth;
+  height = canvas.height = document.body.clientHeight;
   depth = width + height;
 
   gl = canvas.getContext("webgl2");

@@ -24,7 +24,7 @@
       <button class="hide-btn" type="button" name="button" onclick="hideBlock(this, 0)">Pre processing&#9650;</button>
       <section name="hide-block">
         <label for="">Density</label>
-        <input type="range" min="50" max="1500" value="250" step="5" oninput="changeDensity(this.value)" name="pre-proc">
+        <input type="range" min="150" max="1500" value="250" step="5" oninput="changeDensity(this.value)" name="pre-proc">
         <label for="">Quantity arm</label>
         <input type="range" min="2" max="4" value="2" step="1" oninput="changeQuantityArms(this.value)" name="pre-proc">
       </section>
@@ -44,21 +44,22 @@
       <button class="hide-btn" type="button" name="button" onclick="hideBlock(this, 2)">Color&#9650;</button>
       <section name="hide-block">
         <label for="">Red</label>
-        <input type="range" name="color" min="0" max="1" value="0.5" step="0.005" oninput="changeColor(this.value, 0)">
+        <input type="range" name="color" min="0" max="1" value="1" step="0.005" oninput="changeColor(this.value, 0)">
         <label for="">Green</label>
-        <input type="range" name="color" min="0" max="1" value="0.5" step="0.005" oninput="changeColor(this.value, 1)">
+        <input type="range" name="color" min="0" max="1" value="1" step="0.005" oninput="changeColor(this.value, 1)">
         <label for="">Blue</label>
-        <input type="range" name="color" min="0" max="1" value="0.5" step="0.005" oninput="changeColor(this.value, 2)">
+        <input type="range" name="color" min="0" max="1" value="1" step="0.005" oninput="changeColor(this.value, 2)">
       </section>
       <input id="hide" type="button" name="" value="<" onclick="hide()">
     </section>
     <section style="position: fixed; right: 0px; top: 10px; color: white; font-size: 2em;">
+      <span id="gen_time"></span><br>
       <span id="q_elements"></span><br>
       <span id="q_values"></span><br>
       <span id="draw_time"></span>
     </section>
     <section>
-    <canvas id="area" onclick="generateJet()"></canvas>
+    <canvas id="area"></canvas>
 
     <!--Shaders for draw particles-->
 
@@ -69,7 +70,6 @@
       //global transform params
       uniform mat4  u_transform;
       uniform float u_distance;
-      uniform float u_radius;
       uniform vec3  u_color;
 
       out vec4 v_color;
@@ -79,56 +79,16 @@
         float x = a_position.x * cos(a_position.w);
         float y = a_position.x * sin(a_position.w);
 
-        gl_Position = u_transform * vec4(x, y, a_position.y * pow(a_position.x / u_radius, 0.5), u_distance);
+        gl_Position = u_transform * vec4(x, y, a_position.y, u_distance);
         gl_PointSize = a_position.z / u_distance;
 
-        v_color = vec4(a_color * u_color, 1.0) * pow((1.0 - a_position.x / u_radius), 0.3);
-      }
-
-    </script>
-
-    <script id="particle_J-vertex-shader" type="notjs">#version 300 es
-      layout (location = 0) in vec4 a_position;
-      layout (location = 1) in vec3 a_color;
-
-      //global transform params
-      uniform mat4 u_projection;
-      uniform mat4 u_rotation_x;
-      uniform mat4 u_rotation_y;
-      uniform mat4 u_rotation_z;
-      uniform float u_distance;
-      uniform float u_max_h;
-
-      out vec4 v_color;
-
-      void main()
-      {
-        // calc position in object
-        float x = a_position.x * cos(a_position.w);
-        float y = a_position.x * sin(a_position.w);
-
-        mat4 transform = u_projection * u_rotation_x * u_rotation_y * u_rotation_z;
-
-        gl_Position = transform * vec4(x, y, a_position.y, u_distance);
-
-        gl_PointSize = a_position.z / u_distance;
-
-        float z = a_position.y;
-
-        if(a_position.y < 0.0)
-        {
-          z = -a_position.y;
-        }
-
-        v_color = vec4(a_color, 1.0) * (1.0 - pow(z / u_max_h, 3.0));
+        v_color = vec4(a_color * u_color, 1.0);
       }
 
     </script>
 
     <script id="particle-fragment-shader" type="notjs">#version 300 es
       precision mediump float;
-
-      uniform float u_light;
 
       in vec4 v_color;
       out vec4 out_FragColor;
@@ -140,7 +100,7 @@
           discard;
         }
 
-        out_FragColor = v_color * u_light;
+        out_FragColor = v_color;
       }
 
     </script>
