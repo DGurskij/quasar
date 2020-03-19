@@ -367,13 +367,27 @@ var generateJetP = function()
 		size = random(1, 3);
 		z = -jets_start_z + random(0, 3);
 
-		jet_minus[quantity_p_jet_minus++] = new Particle(x, z, size, angle, [0, 1.4 - angle / PI_MUL_TWO, 1]);
+		jet_minus[quantity_p_jet_minus++] =
+		{
+			x: x,
+			z: z,
+			size: size,
+			angle: angle,
+			color: [0, 1.4 - angle / PI_MUL_TWO, 1]
+		};
 
 		x = random(jets_start_x - 10, jets_start_x + 10);
 		angle = random(0, PI_MUL_TWO);
 		size = random(1, 3);
 		z = jets_start_z + random(0, 3);
 
-		jet_plus[quantity_p_jet_plus++] = new Particle(x, z, size, angle, [0, 1.4 - angle / PI_MUL_TWO, 1]);
+		jet_plus[quantity_p_jet_plus++] =
+		{
+			x: x,
+			z: z,
+			size: size,
+			angle: angle,
+			color: [0, 1.4 - angle / PI_MUL_TWO, 1]
+		};
 	}
 }
