@@ -50,7 +50,7 @@ var initShaders = function()
   height = canvas.height = document.body.clientHeight;
   depth = width + height;
 
-  gl = canvas.getContext("webgl2");
+  gl = canvas.getContext("webgl2", { alpha: false });
 
   if(!gl)
   {
