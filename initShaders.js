@@ -5,7 +5,6 @@ var color_buffer;
 // shaders
 var particle_shader;
 var particle_j_shader;
-var jet_shader;
 var black_hole_shader;
 
 // particle uniforms

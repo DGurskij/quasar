@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "target": "es5",
+    "lib": ["dom", "es5"],
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "baseUrl": "./",
+    "newLine": "lf",
+    "declaration": true,
+    "declarationDir": "./dist",
+    "paths": {
+      "src/*": ["src/*"]
+    }
+  },
+
+  "include": ["src/**/*", "types/*"],
+  "exclude": ["./dist", "./build", "./js", "*.js", "src/**/*.js"]
+}

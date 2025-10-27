@@ -1,0 +1,16 @@
+.DS_Store
+.thumbs.db
+node_modules
+
+.quasar
+/dist
+/build
+/server
+
+# Log files
+npm-debug.log*
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
