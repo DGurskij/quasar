@@ -5,6 +5,7 @@ import { IJetParticle } from './types';
 
 export class QuasarAnimation {
   engineFPS: number = 60;
+  frameTime: number = 0;
 
   /** Game state: 0 - not started, 1 - started, 2 - paused */
   animationState: 0 | 1 | 2 = 0;
@@ -42,7 +43,7 @@ export class QuasarAnimation {
   quantityParticlesJetPlus: number = 0;
 
   light: number = 0;
-  jetTime: number = 0;
+  jetsTime: number = 0;
   jetLight: number = 0;
   blackHoleSize: number = 0;
   jetsMaxZ: number = 0;
@@ -69,6 +70,7 @@ export class QuasarAnimation {
   setAreaSize(width: number, height: number) {
     this.width = width;
     this.height = height;
+    this.depth = width + height;
 
     this.gl.canvas.width = width;
     this.gl.canvas.height = height;
@@ -83,6 +85,8 @@ export class QuasarAnimation {
   }
 
   start() {
+    this.frameTime = 1000 / this.engineFPS;
+
     this.animationState = 1;
 
     this.light = 1.0;
@@ -92,6 +96,7 @@ export class QuasarAnimation {
     this.initParticlesFunction();
 
     this.blackHoleSize = BLACK_HOLE_SIZE * this.globalConst;
+    console.log(this.width, this.height, this.depth);
 
     this.matProjection = getProjectionMatrix(this.width, this.height, this.depth);
 
@@ -114,7 +119,6 @@ export class QuasarAnimation {
 
   pause(send = false) {
     this.animationState = 2;
-    this.drawFunction();
 
     if (send) {
       this.onPlayPause(0);
@@ -131,7 +135,7 @@ export class QuasarAnimation {
   }
 
   startJet() {
-    this.jetTime = JETS_TIME;
+    this.jetsTime = JETS_TIME;
   }
 
   forward(value: number) {

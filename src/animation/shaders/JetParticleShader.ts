@@ -1,7 +1,6 @@
 import IShaderSrc from 'src/webgl/IShaderSrc';
 
-const vertex = `
-#version 300 es
+const vertex = `#version 300 es
 layout (location = 0) in vec4 a_position;
 layout (location = 1) in vec3 a_color;
 
@@ -32,8 +31,7 @@ void main()
   v_color = vec4(a_color, 1.0) * (1.0 - pow(z / u_max_h, 3.0));
 }`;
 
-const fragment = `
-#version 300 es
+const fragment = `#version 300 es
 precision mediump float;
 
 uniform float u_light;

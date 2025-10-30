@@ -6,10 +6,10 @@
     <link rel="stylesheet" href="style.css">
     <title>Quasar</title>
   </head>
-  <body onload="{launch();}" style="margin: 0px;">
+  <body onload="quasarAnimationInit();" style="margin: 0px;">
     <section id="panel">
       <a href="lmg/generator.html">Generate large model</a>
-      <input type="button" value="Pause" onclick="pause(this)">
+      <input type="button" value="Pause" onclick="quasarAnimationPlayPause(this)">
       <label for="">Rotate X</label>
       <input type="range" min="0" max="360" value="0" step="1" oninput="rotate(this.value, 0)" name="control_rotate">
       <label for="">Rotate Y</label>
@@ -19,7 +19,7 @@
       <label for="">Distance</label>
       <input type="range" min="0.75" max="2" value="1" step="0.01" oninput="forward(this.value)">
     </section>
-    <canvas id="area" onclick="generateJet()"></canvas>
+    <canvas id="area" onclick="quasarAnimationStartJet()"></canvas>
 
     <!--Shaders for draw particles-->
 

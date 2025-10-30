@@ -1,7 +1,6 @@
 import IShaderSrc from 'src/webgl/IShaderSrc';
 
-const vertex = `
-#version 300 es
+const vertex = `#version 300 es
 layout (location = 0) in vec3 a_position;
 
 uniform float u_distance;
@@ -12,8 +11,7 @@ void main()
   gl_PointSize = a_position.z / u_distance;
 }`;
 
-const fragment = `
-#version 300 es
+const fragment = `#version 300 es
 precision mediump float;
 
 out vec4 out_FragColor;

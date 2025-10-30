@@ -37,7 +37,6 @@ let jetMinus: IJetParticle[] = [];
 let quantityParticlesJetMinus: number = 0;
 let jetPlus: IJetParticle[] = [];
 let quantityParticlesJetPlus: number = 0;
-let jetsTime: number = 0;
 
 // let addParticle;
 
@@ -67,15 +66,13 @@ let jetsStartZ: number;
  */
 export function initParticlesForCanvas(this: QuasarAnimation) {
   particles = [];
-  // flashes = [];
-  quantityParticles = 0;
-  // quantity_flashes = flashes.length;
-  jetsTime = 0;
+  this.particles = particles;
   jetMinus = [];
   this.jetMinus = jetMinus;
   jetPlus = [];
   this.jetPlus = jetPlus;
 
+  quantityParticles = 0;
   quantityParticlesJetMinus = 0;
   quantityParticlesJetPlus = 0;
 
@@ -112,6 +109,7 @@ export function initParticlesForCanvas(this: QuasarAnimation) {
 
   this.quantityParticles = quantityParticles;
 
+  // store particles in buffer
   const { gl } = this;
 
   gl.bindVertexArray(this.particlesVAO);
@@ -132,6 +130,8 @@ export function initParticlesForCanvas(this: QuasarAnimation) {
  * Move particles and jet particles
  */
 export function animationEngine(this: QuasarAnimation) {
+  const t1 = performance.now();
+
   let flag = 0;
   let deletedStart = -1; // Index of the first particle to be deleted
 
@@ -176,10 +176,11 @@ export function animationEngine(this: QuasarAnimation) {
     }
   }
 
-  if (jetsTime > 0) {
+  if (this.jetsTime > 0) {
+    console.log('jetsTime', this.jetsTime);
     this.jetLight = 1;
     generateJetParticles();
-    jetsTime--;
+    this.jetsTime--;
   } else {
     this.jetLight -= 0.025;
 
@@ -192,8 +193,23 @@ export function animationEngine(this: QuasarAnimation) {
     }
   }
 
+  console.log('1', quantityParticlesJetMinus, jetMinus.length);
+
   this.quantityParticlesJetMinus = quantityParticlesJetMinus;
   this.quantityParticlesJetPlus = quantityParticlesJetPlus;
+
+  this.drawFunction();
+
+  if (this.animationState === 1) {
+    const t2 = performance.now();
+    const delay = this.frameTime - (t2 - t1);
+
+    if (delay > 0) {
+      setTimeout(this.engineFunction, delay);
+    } else {
+      this.engineFunction();
+    }
+  }
 }
 
 function generateParticles(v: number, firstGeneration: boolean, startPosition: number) {

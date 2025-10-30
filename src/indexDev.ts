@@ -3,24 +3,32 @@ import { QuasarAnimation } from '.';
 declare global {
   interface Window {
     quasarAnimationInit: (canvas: HTMLCanvasElement) => void;
+    quasarAnimationPlayPause: (el: HTMLInputElement) => void;
+    quasarAnimationStartJet: () => void;
   }
 }
 
 window.quasarAnimationInit = () => {
   const canvas = document.getElementById('area') as HTMLCanvasElement;
   QuasarAnimation.init(canvas);
+
+  QuasarAnimation.setAreaSize(2040, 1000);
+  QuasarAnimation.start();
 };
 
-function animationPause(el: HTMLInputElement) {
-  el.value = 'Resume';
-  // el.onclick = () => resume(el);
+window.quasarAnimationPlayPause = (el: HTMLInputElement) => {
+  if (el.value === 'Pause') {
+    el.value = 'Resume';
+  } else {
+    el.value = 'Pause';
+  }
 
-  // state = 0;
-  // if (engine != 0) {
-  //   clearInterval(engine);
-  //   engine = 0;
-  // }
-}
+  QuasarAnimation.playPause();
+};
+
+window.quasarAnimationStartJet = () => {
+  QuasarAnimation.startJet();
+};
 
 // var resume = function (el) {
 //   el.value = 'Pause';
