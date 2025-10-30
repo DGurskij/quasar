@@ -1,19 +1,26 @@
-// declare global {
-//   interface Window {
-//     initGame: (fontFile: string) => void;
-//   }
-// }
+import { QuasarAnimation } from '.';
 
-// var pause = function (el) {
-//   el.value = 'Resume';
-//   el.onclick = () => resume(el);
+declare global {
+  interface Window {
+    quasarAnimationInit: (canvas: HTMLCanvasElement) => void;
+  }
+}
 
-//   state = 0;
-//   if (engine != 0) {
-//     clearInterval(engine);
-//     engine = 0;
-//   }
-// };
+window.quasarAnimationInit = () => {
+  const canvas = document.getElementById('area') as HTMLCanvasElement;
+  QuasarAnimation.init(canvas);
+};
+
+function animationPause(el: HTMLInputElement) {
+  el.value = 'Resume';
+  // el.onclick = () => resume(el);
+
+  // state = 0;
+  // if (engine != 0) {
+  //   clearInterval(engine);
+  //   engine = 0;
+  // }
+}
 
 // var resume = function (el) {
 //   el.value = 'Pause';

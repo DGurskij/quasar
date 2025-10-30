@@ -43,7 +43,6 @@ void main()
 }`;
 
 export default {
-  name: 'particle',
   vert: vertex,
   frag: fragment,
   uniforms: ['u_transform', 'u_distance', 'u_radius', 'u_light'],

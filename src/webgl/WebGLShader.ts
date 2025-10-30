@@ -71,12 +71,12 @@ export default class WebGLShaderProgram {
     return 0;
   }
 
-  static initShaders(gl: WebGLRenderingContext | WebGL2RenderingContext, shadersSrc: IShaderSrc[]) {
-    const shaders: { [key: string]: WebGLShaderProgram } = {};
+  static initShaders<K extends string>(gl: WebGLRenderingContext | WebGL2RenderingContext, shadersSrc: Record<K, IShaderSrc>) {
+    const shaders = {} as Record<K, WebGLShaderProgram>;
 
-    for (let i = 0; i < shadersSrc.length; i++) {
-      const src = shadersSrc[i];
-      shaders[src.name] = new WebGLShaderProgram(gl, src.vert, src.frag, src.uniforms);
+    for (const key in shadersSrc) {
+      const src = shadersSrc[key];
+      shaders[key] = new WebGLShaderProgram(gl, src.vert, src.frag, src.uniforms);
     }
 
     return shaders;

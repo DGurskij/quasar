@@ -1,24 +1,56 @@
-export class Game {
-  /** Game ticker for engine */
-  ticker: number | undefined;
-  /** Game state: 0 - not started, 1 - started, 2 - paused */
-  gameState: 0 | 1 | 2 = 0;
+import { getProjectionMatrix, getRotationX, getRotationY, getRotationZ, getTransformation } from 'src/common/math';
 
-  transformation: mat4;
-  projection: vec2;
-  rotate_x: number;
-  rotate_y: number;
-  rotate_z: number;
-  distance: number;
-  width: number;
-  height: number;
-  depth: number;
+import { BLACK_HOLE_SIZE, DEGR_TO_RAD, INIT_ANGLE_X, INIT_ANGLE_Y, INIT_ANGLE_Z, JETS_TIME } from './constants';
+import { IJetParticle } from './types';
+
+export class QuasarAnimation {
+  engineFPS: number = 60;
+
+  /** Game state: 0 - not started, 1 - started, 2 - paused */
+  animationState: 0 | 1 | 2 = 0;
+
+  globalRadius: number = 0;
+  globalConst: number = 0;
+
+  angleX: number = 0;
+  angleY: number = 0;
+  angleZ: number = 0;
+  distance: number = 0;
+
+  // shaders matrices
+  matRotateX: number[] = []; // rotate matrix for x axis
+  matRotateY: number[] = []; // rotate matrix for y axis
+  matRotateZ: number[] = []; // rotate matrix for z axis
+  matProjection: number[] = []; // projection matrix
+  matTransformation: number[] = []; // transformation matrix
+
+  // quasar size and depth
+  width: number = 0;
+  height: number = 0;
+  depth: number = 0;
+
+  // particles
+  particles: number[] = [];
+  quantityParticles: number = 0;
+  particlesVAO: WebGLVertexArrayObject;
+  particlesVBO: WebGLBuffer;
+
+  // jet particles
+  jetMinus: IJetParticle[] = [];
+  quantityParticlesJetMinus: number = 0;
+  jetPlus: IJetParticle[] = [];
+  quantityParticlesJetPlus: number = 0;
+
+  light: number = 0;
+  jetTime: number = 0;
+  jetLight: number = 0;
+  blackHoleSize: number = 0;
+  jetsMaxZ: number = 0;
 
   engineFunction: (...args: any[]) => void;
+  initParticlesFunction: (...args: any[]) => void;
   drawFunction: (...args: any[]) => void;
-  onGameEnd: (gameResult: IGameResult) => void | Promise<void>;
-  onGameStopped: () => void | Promise<void>;
-  onGamePlayPause: (state: 0 | 1) => void;
+  onPlayPause: (state: 0 | 1) => void;
 
   gl: WebGL2RenderingContext;
 
@@ -26,160 +58,115 @@ export class Game {
     this.gl = gl;
 
     this.engineFunction = () => {};
+    this.initParticlesFunction = () => {};
     this.drawFunction = () => {};
-    this.onGameEnd = () => {};
-    this.onGameStopped = () => {};
-    this.onGamePlayPause = () => {};
+    this.onPlayPause = () => {};
 
-    this.particles  = GAME_OBJECTS.particles;
-    this.stars      = GAME_OBJECTS.stars;
-    this.blackHoles = GAME_OBJECTS.blackHoles;
-    this.blastWawes = GAME_OBJECTS.blastWawes;
+    this.particlesVAO = gl.createVertexArray();
+    this.particlesVBO = gl.createBuffer();
   }
 
-  startGame() {
-    this.gameState = 1;
-    this.scale = 1;
+  setAreaSize(width: number, height: number) {
+    this.width = width;
+    this.height = height;
 
-    this.particles  = GAME_OBJECTS.particles  = [];
-    this.stars      = GAME_OBJECTS.stars      = [];
-    this.blackHoles = GAME_OBJECTS.blackHoles = [];
-    this.blastWawes = GAME_OBJECTS.blastWawes = [];
+    this.gl.canvas.width = width;
+    this.gl.canvas.height = height;
 
-    STATS.sended = false;
-    STATS.clear();
+    this.matProjection = getProjectionMatrix(this.width, this.height, this.depth);
 
-    this.blackHoleTimer = 10000;
+    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
 
-    this.cameraX = 0;
-		this.cameraY = 0;
-
-		const width_ = this.halfW - STAR_MAX_SIZE;
-		const height_ = this.halfH - STAR_MAX_SIZE;    
-
-    let x = random(width_, STAR_MAX_SIZE);
-    let y = random(height_, STAR_MAX_SIZE);
-    
-		this.stars.push(new Star(60, x, y, 0, 0));
-
-		x = random(-STAR_MAX_SIZE, -width_);
-		y = random(-STAR_MAX_SIZE, -height_);
-
-		this.stars.push(new Star(60, x, y, 0, 0));
-
-		this.ticker = setInterval(this.engineFunction, 16) as unknown as number;
-  }
-
-  stopGame() {
-    if (!STATS.sended) {
-      STATS.sended = true;
-
-      if (STATS.data.score.score > 0) {
-        this.onGameEnd(STATS.getGameResult());
-      }
-    }
-    this.gameState = 0;
-    STATS.clear();
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-    if (this.ticker) {
-      clearInterval(this.ticker);
-      this.ticker = undefined;
-    }
-
-    this.onGameStopped();
-  }
-
-  pauseGame(send = false) {
-    this.gameState = 2;
-
-    if (typeof this.ticker !== 'undefined') {
-      clearInterval(this.ticker);
-      this.ticker = undefined;
-    }
-
-    this.drawFunction();
-
-    if (send) {
-      this.onGamePlayPause(0);
-    }
-  }
-
-  resumeGame(send = false) {
-    this.gameState = 1;
-    this.ticker = setInterval(this.engineFunction, 16) as unknown as number;
-
-    if (send) {
-      this.onGamePlayPause(1);
-    }
-  }
-
-  /**
-   * Serach star in (x; y)
-   */
-  searchStarInLocation(x: number, y: number) {
-    x = (x - this.halfW) / this.scale + this.cameraX;
-    y = (this.halfH - y) / this.scale + this.cameraY;
-
-    for (let i = 0; i < GAME_OBJECTS.stars.length; i++) {
-      if (!this.stars[i].isSupernova) {
-        if (this.stars[i].size > 15) {
-          if (distanceSurfacePtoP(x, y, 0, this.stars[i].x, this.stars[i].y, this.stars[i].size * 0.8) <= 0) {
-            this.stars[i].userHover();
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Move camera
-   */
-  locationChange(x: number, y: number) {
-    this.cameraX += (this.mouseDownX - x) / this.scale;
-    this.cameraY -= (this.mouseDownY - y) / this.scale;
-
-    this.mouseDownX = x;
-    this.mouseDownY = y;
-
-    if(this.gameState == 2) {
+    if (this.animationState === 2) {
       this.drawFunction();
     }
   }
 
-  /* ELEMENTS NAVIGATORS */
-  toBlackHole() {
-    if (blackHoleFollow + 1 >= this.blackHoles.length) {
-      blackHoleFollow = -1;
-    }
+  start() {
+    this.animationState = 1;
 
-    for (let i = blackHoleFollow + 1; i < this.blackHoles.length; i++) {
-      this.cameraX = this.blackHoles[i].x;
-      this.cameraY = this.blackHoles[i].y;
+    this.light = 1.0;
+    this.jetLight = 1.0;
+    this.distance = 1;
 
-      blackHoleFollow = i;
-      break;
-    }
+    this.initParticlesFunction();
 
-    this.drawFunction();
+    this.blackHoleSize = BLACK_HOLE_SIZE * this.globalConst;
+
+    this.matProjection = getProjectionMatrix(this.width, this.height, this.depth);
+
+    this.matRotateX = getRotationX(INIT_ANGLE_X);
+    this.matRotateY = getRotationY(INIT_ANGLE_Y);
+    this.matRotateZ = getRotationZ(INIT_ANGLE_Z);
+
+    this.updateTransformation();
+
+    // let rotate_controllers = document.getElementsByName('control_rotate');
+
+    // rotate_controllers[0].value = INIT_ANGLE_X * RAD_TO_DEGR;
+    // rotate_controllers[1].value = INIT_ANGLE_Y * RAD_TO_DEGR;
+    // rotate_controllers[2].value = INIT_ANGLE_Z * RAD_TO_DEGR;
+
+    // distance = 1;
+
+    this.engineFunction();
   }
 
-  toStar() {
-    if (starFollow + 1 >= this.stars.length) {
-      starFollow = -1;
-    }
-
-    for (let i = starFollow + 1; i < this.stars.length; i++) {
-      if (!this.stars[i].isSupernova && this.stars[i].size > STAR_MIN_SIZE) {
-        this.cameraX = this.stars[i].x;
-        this.cameraY = this.stars[i].y;
-
-        starFollow = i;
-
-        break;
-      }
-    }
-
+  pause(send = false) {
+    this.animationState = 2;
     this.drawFunction();
+
+    if (send) {
+      this.onPlayPause(0);
+    }
+  }
+
+  resume(send = false) {
+    this.animationState = 1;
+    this.engineFunction();
+
+    if (send) {
+      this.onPlayPause(1);
+    }
+  }
+
+  startJet() {
+    this.jetTime = JETS_TIME;
+  }
+
+  forward(value: number) {
+    this.distance = value;
+
+    if (this.animationState === 2) {
+      this.drawFunction();
+    }
+  }
+
+  rotate(value: number, axis: 'x' | 'y' | 'z') {
+    const v = value * DEGR_TO_RAD;
+
+    switch (axis) {
+      case 'z':
+        this.angleZ = v;
+        this.matRotateZ = getRotationZ(v);
+        break;
+      case 'y':
+        this.angleY = v;
+        this.matRotateY = getRotationY(v);
+        break;
+      case 'x':
+        this.angleX = v;
+        this.matRotateX = getRotationX(v);
+    }
+
+    this.updateTransformation();
+
+    if (this.animationState === 2) {
+      this.drawFunction();
+    }
+  }
+
+  private updateTransformation() {
+    this.matTransformation = getTransformation(this.matRotateZ, this.matRotateY, this.matRotateX, this.matProjection);
   }
 }

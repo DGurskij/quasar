@@ -3,22 +3,11 @@
   <head>
     <meta charset="utf-8">
     <link rel="icon" type="image/ico" href="page-ico.ico">
-    <script type="text/javascript" src="constants.js"></script>
-    <script type="text/javascript" src="initShaders.js"></script>
-    <script type="text/javascript" src="math.js"></script>
-    <script type="text/javascript" src="function.js"></script>
-    <script type="text/javascript" src="controller.js"></script>
     <link rel="stylesheet" href="style.css">
     <title>Quasar</title>
   </head>
   <body onload="{launch();}" style="margin: 0px;">
-    <section id="error">
-      Webgl 2.0 doesn't supported, try go to
-        <a href="old/index.html">OLD</a> version or change browser.<br>
-      Recommend: Chrome, Opera, Mozilla.
-    </section>
     <section id="panel">
-      <a href="old/index.html">Old version 1.0</a>
       <a href="lmg/generator.html">Generate large model</a>
       <input type="button" value="Pause" onclick="pause(this)">
       <label for="">Rotate X</label>
@@ -34,7 +23,7 @@
 
     <!--Shaders for draw particles-->
 
-    <script id="particle-vertex-shader" type="notjs">#version 300 es
+    <!-- <script id="particle-vertex-shader" type="notjs">#version 300 es
       layout (location = 0) in vec4 a_position;
       layout (location = 1) in vec3 a_color;
 
@@ -146,7 +135,7 @@
         }
       }
 
-    </script>
+    </script> -->
 
   </body>
 </html>

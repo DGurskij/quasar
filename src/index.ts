@@ -1,1 +1,3 @@
-export { init as initAnimation } from './animation';
+import * as QuasarAnimation from './animation';
+
+export { QuasarAnimation };

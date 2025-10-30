@@ -52,7 +52,6 @@ void main()
 }`;
 
 export default {
-  name: 'particleJ',
   vert: vertex,
   frag: fragment,
   uniforms: ['u_transform', 'u_distance', 'u_max_h', 'u_light'],

@@ -36,7 +36,6 @@ void main()
 }`;
 
 export default {
-  name: 'blackHole',
   vert: vertex,
   frag: fragment,
   uniforms: ['u_distance'],

@@ -54,10 +54,11 @@ export function getRotationZ(a: number) {
 }
 
 /**
- * Set the transformation matrix
+ * Calcualte the transformation matrix
  */
-export function setTransformation() {
-	// transformation = matrixMulMatrix(matrixMulMatrix(matrixMulMatrix(rotate_z, rotate_y), rotate_x), projection);
+export function getTransformation(rotateZ: number[], rotateY: number[], rotateX: number[], projection: number[]) {
+	// transformation = matrixMulMatrix(matrixMulMatrix(matrixMulMatrix(rotate_z, rotate_y), rotate_x), projection); // legacy reminder
+	return matrixMulMatrix(matrixMulMatrix(matrixMulMatrix(rotateZ, rotateY), rotateX), projection);
 }
 
 /* vector operations */
