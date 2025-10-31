@@ -1,13 +1,12 @@
 import WebGLShaderProgram from 'src/webgl/WebGLShader';
 
-import { QuasarAnimation } from './Animation';
+import { QuasarAnimation } from './QuasarAnimation';
 import Shaders from './shaders/Shaders';
 
 let shaders: Record<keyof typeof Shaders, WebGLShaderProgram>;
-let positionBuffer: WebGLBuffer;
-let colorBuffer: WebGLBuffer;
 
-let blackHolePositionBuffer: WebGLBuffer;
+// let blackHoleVAO: WebGLVertexArrayObject;
+let blackHoleVBO: WebGLBuffer;
 
 export function initWebGL(gl: WebGL2RenderingContext) {
   shaders = WebGLShaderProgram.initShaders(gl, Shaders);
@@ -23,18 +22,13 @@ export function initWebGL(gl: WebGL2RenderingContext) {
 
   if (status === 0) {
     gl.enable(gl.DEPTH_TEST);
-    // gl.enable(gl.BLEND);
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-    // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    blackHoleVBO = gl.createBuffer();
 
-    blackHolePositionBuffer = gl.createBuffer();
-    positionBuffer = gl.createBuffer();
-    colorBuffer = gl.createBuffer();
-
-    if (!blackHolePositionBuffer || !positionBuffer || !colorBuffer) {
+    if (!blackHoleVBO) {
       status = -2;
     }
   }
@@ -48,52 +42,21 @@ export function drawScene(this: QuasarAnimation) {
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  if (this.quantityParticlesJetMinus || this.quantityParticlesJetPlus) {
+  if (this.quantityJetParticles) {
     gl.useProgram(shaders.jetParticle.program);
 
-    gl.uniform1f(shaders.jetParticle.uniforms['u_light'], this.jetLight);
+    gl.uniform1f(shaders.jetParticle.uniforms['u_light'], this.jetLight * this.light);
     gl.uniformMatrix4fv(shaders.jetParticle.uniforms['u_transform'], false, this.matTransformation);
     gl.uniform1f(shaders.jetParticle.uniforms['u_distance'], this.distance);
     // gl.uniform1f(shaders.jetParticle.uniforms['u_max_h'], this.jetsMaxZ);
 
-    const points: number[] = [];
-    const colors: number[] = [];
-    let k = 0;
-    let l = 0;
+    gl.bindVertexArray(this.jetParticlesVAO);
 
-    for (let i = 0; i < this.quantityParticlesJetMinus; i++) {
-      points[l++] = this.jetMinus[i].x;
-      points[l++] = this.jetMinus[i].z;
-      points[l++] = this.jetMinus[i].size;
-      points[l++] = this.jetMinus[i].angle;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.jetParticlesVBO);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.jetParticlesGpuF32.subarray(0, this.quantityJetParticles * 7));
 
-      colors[k++] = this.jetMinus[i].color[0];
-      colors[k++] = this.jetMinus[i].color[1];
-      colors[k++] = this.jetMinus[i].color[2];
-    }
-
-    for (let i = 0; i < this.quantityParticlesJetPlus; i++) {
-      points[l++] = this.jetPlus[i].x;
-      points[l++] = this.jetPlus[i].z;
-      points[l++] = this.jetPlus[i].size;
-      points[l++] = this.jetPlus[i].angle;
-
-      colors[k++] = this.jetPlus[i].color[0];
-      colors[k++] = this.jetPlus[i].color[1];
-      colors[k++] = this.jetPlus[i].color[2];
-    }
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(1);
-
-    gl.drawArrays(gl.POINTS, 0, this.quantityParticlesJetPlus + this.quantityParticlesJetMinus);
+    gl.drawArrays(gl.POINTS, 0, this.quantityJetParticles);
+    gl.bindVertexArray(null);
   }
 
   if (this.quantityParticles != 0) {
@@ -102,14 +65,17 @@ export function drawScene(this: QuasarAnimation) {
     gl.uniform1f(shaders.particle.uniforms['u_light'], this.light);
     gl.uniformMatrix4fv(shaders.particle.uniforms['u_transform'], false, this.matTransformation);
     gl.uniform1f(shaders.particle.uniforms['u_distance'], this.distance);
-    gl.uniform1f(shaders.particle.uniforms['u_radius'], this.quasarRadius);
+    gl.uniform1f(shaders.particle.uniforms['u_radius'], this.quasarGenerativeParameters.quasarRadius);
 
     gl.bindVertexArray(this.particlesVAO);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.particlesVBO);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.particlesF32.subarray(0, this.quantityParticles * 8));
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.particlesGpuF32.subarray(0, this.quantityParticles * 7));
 
+    // gl.enable(gl.BLEND);
+    // gl.blendFunc(gl.ONE, gl.ONE);
     gl.drawArrays(gl.POINTS, 0, this.quantityParticles);
+    // gl.disable(gl.BLEND);
     gl.bindVertexArray(null);
   }
 
@@ -117,8 +83,8 @@ export function drawScene(this: QuasarAnimation) {
 
   gl.uniform1f(shaders.blackHole.uniforms['u_distance'], this.distance);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, blackHolePositionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, this.blackHoleSize]), gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, blackHoleVBO);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 0.0, this.quasarGenerativeParameters.blackHoleSize]), gl.STATIC_DRAW);
   gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(0);
 
@@ -128,4 +94,47 @@ export function drawScene(this: QuasarAnimation) {
   gl.drawArrays(gl.POINTS, 0, 1);
 
   gl.disable(gl.BLEND);
+}
+
+export function disposeWebGL(qa: QuasarAnimation) {
+  const { gl } = qa;
+
+  // Unbind current WebGL resources
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  gl.bindVertexArray(null);
+  gl.useProgram(null);
+
+  // Delete VAOs and VBOs
+  if (qa.particlesVAO) {
+    gl.deleteVertexArray(qa.particlesVAO);
+    (qa.particlesVAO as any) = null;
+  }
+  if (qa.particlesVBO) {
+    gl.deleteBuffer(qa.particlesVBO);
+    (qa.particlesVBO as any) = null;
+  }
+  if (qa.jetParticlesVAO) {
+    gl.deleteVertexArray(qa.jetParticlesVAO);
+    (qa.jetParticlesVAO as any) = null;
+  }
+  if (qa.jetParticlesVBO) {
+    gl.deleteBuffer(qa.jetParticlesVBO);
+    (qa.jetParticlesVBO as any) = null;
+  }
+  if (blackHoleVBO) {
+    gl.deleteBuffer(blackHoleVBO);
+    (blackHoleVBO as any) = null;
+  }
+
+  // Delete shader programs
+  if (shaders) {
+    Object.values(shaders).forEach(shader => {
+      if (shader.program !== 0 && shader.program !== -1) {
+        gl.deleteProgram(shader.program);
+        (shader.program as any) = null;
+      }
+    });
+
+    (shaders as any) = null;
+  }
 }

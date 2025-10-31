@@ -1,8 +1,34 @@
 import { WEBGL_STATUSES } from 'src/webgl/WebGLStatus';
 
-import { QuasarAnimation } from './Animation';
-import { drawScene, initWebGL } from './DrawFunctions';
-import { animationEngine, initParticlesForCanvas } from './EngineFunctions';
+import {
+  INIT_ANGLE_X,
+  INIT_ANGLE_Y,
+  INIT_ANGLE_Z,
+  INIT_BLACK_HOLE_SIZE,
+  INIT_DISTANCE,
+  INIT_LIGHT,
+  INIT_PARTICLE_GENERATE_STEP,
+  INIT_PARTICLE_MOVE_ANGLE,
+  INIT_PARTICLE_MOVE_X,
+  INIT_RADIUS,
+  MAX_BLACK_HOLE_SIZE,
+  MAX_DISTANCE,
+  MAX_LIGHT,
+  MAX_PARTICLE_GENERATE_STEP,
+  MAX_PARTICLE_MOVE_ANGLE,
+  MAX_PARTICLE_MOVE_X,
+  MAX_RADIUS,
+  MIN_BLACK_HOLE_SIZE,
+  MIN_DISTANCE,
+  MIN_LIGHT,
+  MIN_PARTICLE_GENERATE_STEP,
+  MIN_PARTICLE_MOVE_ANGLE,
+  MIN_PARTICLE_MOVE_X,
+  MIN_RADIUS,
+} from './animation.const';
+import { disposeWebGL, drawScene, initWebGL } from './DrawFunctions';
+import { animationEngine, destroyBuffers, initParticlesForCanvas } from './EngineFunctions';
+import { QuasarAnimation } from './QuasarAnimation';
 import { IQuasarMetrices } from './types';
 
 let quasarAnimation: QuasarAnimation;
@@ -51,20 +77,110 @@ export function setCanvasSize(width: number, height: number) {
   quasarAnimation.setCanvasSize(width, height);
 }
 
+/**
+ * @returns clamped value
+ */
 export function setQuasarRadius(radius: number) {
-  quasarAnimation.setQuasarRadius(radius);
+  if (Number.isNaN(radius)) {
+    throw new Error('Invalid quasar radius value');
+  }
+
+  const clampedValue = Math.min(Math.max(radius, MIN_RADIUS), MAX_RADIUS);
+  quasarAnimation.nextQuasarGenerativeParameters.quasarRadius = clampedValue;
+
+  return clampedValue;
 }
 
+/**
+ * @returns clamped value
+ */
+export function setBlackHoleSize(size: number) {
+  if (Number.isNaN(size)) {
+    throw new Error('Invalid black hole size value');
+  }
+
+  const clampedValue = Math.min(Math.max(size, MIN_BLACK_HOLE_SIZE), MAX_BLACK_HOLE_SIZE);
+  quasarAnimation.nextQuasarGenerativeParameters.blackHoleSize = clampedValue;
+
+  return clampedValue;
+}
+
+/**
+ * @returns clamped value
+ */
 export function setParticleGenerateStep(step: number) {
-  quasarAnimation.setParticleGenerateStep(step);
+  if (Number.isNaN(step)) {
+    throw new Error('Invalid particle generate step value');
+  }
+
+  const clampedValue = Math.min(Math.max(step, MIN_PARTICLE_GENERATE_STEP), MAX_PARTICLE_GENERATE_STEP);
+  quasarAnimation.nextQuasarGenerativeParameters.particleGenerateStep = clampedValue;
+
+  return clampedValue;
+}
+
+/**
+ * @returns clamped value
+ */
+export function setParticleMoveX(x: number) {
+  if (Number.isNaN(x)) {
+    throw new Error('Invalid particle move x value');
+  }
+
+  const clampedValue = Math.min(Math.max(x, MIN_PARTICLE_MOVE_X), MAX_PARTICLE_MOVE_X);
+  quasarAnimation.nextQuasarGenerativeParameters.particleMoveX = clampedValue;
+}
+
+/**
+ * @returns clamped value
+ */
+export function setParticleMoveAngle(angle: number) {
+  if (Number.isNaN(angle)) {
+    throw new Error('Invalid particle move angle value');
+  }
+
+  const clampedValue = Math.min(Math.max(angle, MIN_PARTICLE_MOVE_ANGLE), MAX_PARTICLE_MOVE_ANGLE);
+  quasarAnimation.nextQuasarGenerativeParameters.particleMoveAngle = clampedValue;
+
+  return clampedValue;
 }
 
 export function rotate(value: number, axis: 'x' | 'y' | 'z') {
+  if (Number.isNaN(value)) {
+    throw new Error('Invalid rotate value');
+  }
+
   quasarAnimation.rotate(value, axis);
 }
 
+/**
+ * @returns clamped value
+ */
 export function forward(value: number) {
-  quasarAnimation.forward(value);
+  if (Number.isNaN(value)) {
+    throw new Error('Invalid distance value');
+  }
+
+  const clampedValue = Math.min(Math.max(value, MIN_DISTANCE), MAX_DISTANCE);
+
+  quasarAnimation.forward(clampedValue);
+
+  return clampedValue;
+}
+
+/**
+ * @returns clamped value
+ */
+export function updateLight(value: number) {
+  if (Number.isNaN(value)) {
+    throw new Error('Invalid light value');
+  }
+
+  const clampedValue = Math.min(Math.max(value, MIN_LIGHT), MAX_LIGHT);
+
+  quasarAnimation.updateLight(clampedValue);
+
+  return clampedValue;
 }
 
 export function startJet() {
@@ -77,4 +193,57 @@ export function setRotateCb(cb: (value: number, axis: 'x' | 'y' | 'z') => void) 
 
 export function setUpdateMetricesCb(cb: (metrices: IQuasarMetrices) => void) {
   quasarAnimation.onUpdateMetrices = cb;
+}
+
+type RangeParams = 'quasarRadius' | 'blackHoleSize' | 'particleGenerateStep' | 'particleMoveX' | 'particleMoveAngle' | 'distance' | 'light';
+
+export function getParameterRangeInfo(param: RangeParams) {
+  switch (param) {
+    case 'quasarRadius':
+      return { min: MIN_RADIUS, max: MAX_RADIUS };
+    case 'blackHoleSize':
+      return { min: MIN_BLACK_HOLE_SIZE, max: MAX_BLACK_HOLE_SIZE };
+    case 'particleGenerateStep':
+      return { min: MIN_PARTICLE_GENERATE_STEP, max: MAX_PARTICLE_GENERATE_STEP };
+    case 'particleMoveX':
+      return { min: MIN_PARTICLE_MOVE_X, max: MAX_PARTICLE_MOVE_X };
+    case 'particleMoveAngle':
+      return { min: MIN_PARTICLE_MOVE_ANGLE, max: MAX_PARTICLE_MOVE_ANGLE };
+    case 'distance':
+      return { min: MIN_DISTANCE, max: MAX_DISTANCE };
+    case 'light':
+      return { min: MIN_LIGHT, max: MAX_LIGHT };
+    default:
+      throw new Error(`Invalid range parameter: ${param}`);
+  }
+}
+
+export function getInitialParameters() {
+  return {
+    quasarRadius: INIT_RADIUS,
+    blackHoleSize: INIT_BLACK_HOLE_SIZE,
+    particleGenerateStep: INIT_PARTICLE_GENERATE_STEP,
+    particleMoveX: INIT_PARTICLE_MOVE_X,
+    particleMoveAngle: INIT_PARTICLE_MOVE_ANGLE,
+
+    distance: INIT_DISTANCE,
+    light: INIT_LIGHT,
+    angleX: INIT_ANGLE_X,
+    angleY: INIT_ANGLE_Y,
+    angleZ: INIT_ANGLE_Z,
+  };
+}
+
+export function dispose() {
+  if (!quasarAnimation) {
+    return;
+  }
+
+  // Stop animation before disposing resources
+  quasarAnimation.stop();
+
+  disposeWebGL(quasarAnimation);
+  destroyBuffers(quasarAnimation);
+
+  (quasarAnimation as any) = null;
 }

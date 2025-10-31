@@ -18,25 +18,15 @@ void main()
   float x = a_position.x * cos(a_position.w);
   float y = a_position.x * sin(a_position.w);
 
-  float factor;
-  if (a_position.x < 201.0) {
-    factor = pow(1.0 - (a_position.x / u_radius), 10.0);
-    // factor = a_position.x / u_radius;
-    factor = 1.0;
-    } else {
-    factor = 1.0;
-    // factor = 1.0 -a_position.x / u_radius;
-  }
-
-  // gl_Position = u_transform * vec4(x, y, a_position.y * a_position.x / u_radius, u_distance);
-  gl_Position = u_transform * vec4(x, y, a_position.y * factor  , u_distance);
-  // gl_PointSize = a_position.z * (1.5 - a_position.x / u_radius) / u_distance;
-  gl_PointSize = a_position.z / u_distance;
+  gl_Position = u_transform * vec4(x, y, a_position.y, u_distance);
+  // gl_PointSize = a_position.z / u_distance;
+  gl_PointSize = a_position.z;
 
   float t = a_position.x / u_radius;
   vec3 finalColor = mix(center_color, a_color, t);
 
-  v_color = vec4(finalColor, 1.0);
+  // v_color = vec4(finalColor, 1.0);
+  v_color = vec4(finalColor, 1.0) * pow(1.8 - a_position.x / u_radius, 13.0);
   // v_color = vec4(a_color, 1.0) * pow(1.0 - a_position.x / u_radius, 1.4);
 }`;
 

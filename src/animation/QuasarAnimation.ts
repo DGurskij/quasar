@@ -1,9 +1,20 @@
 import { getProjectionMatrix, getRotationX, getRotationY, getRotationZ, getTransformation } from 'src/common/math';
 import { DEGR_TO_RAD, RAD_TO_DEGR } from 'src/common/math.const';
 
-import { BLACK_HOLE_SIZE, JETS_TIME } from './generate.const';
-import { INIT_ANGLE_X, INIT_ANGLE_Y, INIT_ANGLE_Z, INIT_DISTANCE, INIT_PARTICLE_GENERATE_STEP, INIT_RADIUS } from './init.const';
-import { IJetParticle, IQuasarMetrices } from './types';
+import {
+  INIT_ANGLE_X,
+  INIT_ANGLE_Y,
+  INIT_ANGLE_Z,
+  INIT_BLACK_HOLE_SIZE,
+  INIT_DISTANCE,
+  INIT_LIGHT,
+  INIT_PARTICLE_GENERATE_STEP,
+  INIT_PARTICLE_MOVE_ANGLE,
+  INIT_PARTICLE_MOVE_X,
+  INIT_RADIUS,
+  JETS_TIME,
+} from './animation.const';
+import { IQuasarGenerativeParameters, IQuasarMetrices } from './types';
 
 let drawTimeSum: number = 0;
 let frameCount: number = 0;
@@ -18,16 +29,15 @@ export class QuasarAnimation {
   animationState: 0 | 1 | 2 = 0;
 
   // quasar size and generative parameters
-  newQuasarRadius: number = 0;
-  quasarRadius: number = 0;
-  globalConst: number = 0;
-  newParticleGenerateStep: number = 0;
-  particleGenerateStep: number = 0;
+  nextQuasarGenerativeParameters: IQuasarGenerativeParameters;
+  quasarGenerativeParameters: IQuasarGenerativeParameters;
 
+  // dynamic parameters
   angleX: number = 0;
   angleY: number = 0;
   angleZ: number = 0;
   distance: number = 0;
+  light: number = 0;
 
   // view matrices and parameters
   width: number = 0;
@@ -41,18 +51,17 @@ export class QuasarAnimation {
   matTransformation: number[] = []; // transformation matrix
 
   // particles
-  particlesF32!: Float32Array;
+  particlesGpuF32!: Float32Array;
   quantityParticles: number = 0;
   particlesVAO: WebGLVertexArrayObject;
   particlesVBO: WebGLBuffer;
 
   // jet particles
-  jetMinus: IJetParticle[] = [];
-  quantityParticlesJetMinus: number = 0;
-  jetPlus: IJetParticle[] = [];
-  quantityParticlesJetPlus: number = 0;
+  jetParticlesGpuF32!: Float32Array;
+  quantityJetParticles: number = 0;
+  jetParticlesVAO: WebGLVertexArrayObject;
+  jetParticlesVBO: WebGLBuffer;
 
-  light: number = 0;
   jetsTime: number = 0;
   jetLight: number = 0;
   blackHoleSize: number = 0;
@@ -80,13 +89,23 @@ export class QuasarAnimation {
     this.particlesVAO = gl.createVertexArray();
     this.particlesVBO = gl.createBuffer();
 
-    this.newQuasarRadius = INIT_RADIUS;
-    this.newParticleGenerateStep = INIT_PARTICLE_GENERATE_STEP;
+    this.jetParticlesVAO = gl.createVertexArray();
+    this.jetParticlesVBO = gl.createBuffer();
+
+    this.nextQuasarGenerativeParameters = {
+      quasarRadius: INIT_RADIUS,
+      blackHoleSize: INIT_BLACK_HOLE_SIZE,
+      particleMoveX: INIT_PARTICLE_MOVE_X,
+      particleMoveAngle: INIT_PARTICLE_MOVE_ANGLE,
+      particleGenerateStep: INIT_PARTICLE_GENERATE_STEP,
+    };
+    this.quasarGenerativeParameters = { ...this.nextQuasarGenerativeParameters };
 
     this.angleX = INIT_ANGLE_X;
     this.angleY = INIT_ANGLE_Y;
     this.angleZ = INIT_ANGLE_Z;
     this.distance = INIT_DISTANCE;
+    this.light = INIT_LIGHT;
 
     this.bindedLoop = this.loop.bind(this);
   }
@@ -109,28 +128,16 @@ export class QuasarAnimation {
     }
   }
 
-  setQuasarRadius(radius: number) {
-    this.newQuasarRadius = radius;
-  }
-
-  setParticleGenerateStep(step: number) {
-    this.newParticleGenerateStep = step;
-  }
-
   start() {
     this.frameTime = 1000 / this.engineFPS;
 
     this.animationState = 1;
 
-    this.light = 1.0;
     this.jetLight = 1.0;
     this.jetsTime = 0;
-    this.quasarRadius = this.newQuasarRadius;
-    this.particleGenerateStep = this.newParticleGenerateStep;
+    this.quasarGenerativeParameters = { ...this.nextQuasarGenerativeParameters }; // copy next parameters to current
 
     this.initParticlesFunction();
-
-    this.blackHoleSize = BLACK_HOLE_SIZE;
 
     this.matProjection = getProjectionMatrix(this.width, this.height, this.depth);
 
@@ -152,9 +159,9 @@ export class QuasarAnimation {
     drawTimeSum = 0;
     frameCount = 0;
     this.lastTime = performance.now();
-    for (let i = 0; i < 2000; i++) {
-      this.engineFunction();
-    }
+    // for (let i = 0; i < 2000; i++) {
+    //   this.engineFunction();
+    // }
     this.loop();
   }
 
@@ -221,14 +228,6 @@ export class QuasarAnimation {
     this.jetsTime = JETS_TIME;
   }
 
-  forward(value: number) {
-    this.distance = value;
-
-    if (this.animationState === 2) {
-      this.drawFunction();
-    }
-  }
-
   rotate(value: number, axis: 'x' | 'y' | 'z') {
     const v = value * DEGR_TO_RAD;
 
@@ -251,6 +250,18 @@ export class QuasarAnimation {
     if (this.animationState === 2) {
       this.drawFunction();
     }
+  }
+
+  forward(value: number) {
+    this.distance = value;
+
+    if (this.animationState === 2) {
+      this.drawFunction();
+    }
+  }
+
+  updateLight(value: number) {
+    this.light = value;
   }
 
   private updateTransformation() {

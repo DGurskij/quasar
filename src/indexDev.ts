@@ -4,18 +4,24 @@ import { QuasarAnimation } from '.';
 
 declare global {
   interface Window {
-    quasarAnimationInit: (canvas: HTMLCanvasElement) => void;
-    quasarAnimationPlayPause: (el: HTMLInputElement) => void;
-    quasarAnimationStart: () => void;
-    quasarAnimationStartJet: () => void;
-    quasarAnimationRotate: (value: string, axis: 'x' | 'y' | 'z') => void;
-    quasarAnimationForward: (value: string) => void;
-    quasarAnimationSetQuasarRadius: (radius: string) => void;
-    quasarAnimationSetParticleGenerateStep: (step: string) => void;
+    animationInit: (canvas: HTMLCanvasElement) => void;
+    animationPlayPause: (el: HTMLInputElement) => void;
+    animationStart: () => void;
+    animationStartJet: () => void;
+
+    animationSetQuasarRadius: (radius: string) => void;
+    animationSetBlackHoleSize: (size: string) => void;
+    animationSetParticleGenerateStep: (step: string) => void;
+    animationSetParticleMoveX: (x: string) => void;
+    animationSetParticleMoveAngle: (angle: string) => void;
+
+    animationRotate: (value: string, axis: 'x' | 'y' | 'z') => void;
+    animationForward: (value: string) => void;
+    animationUpdateLight: (value: string) => void;
   }
 }
 
-window.quasarAnimationInit = () => {
+window.animationInit = () => {
   const canvas = document.getElementById('area') as HTMLCanvasElement;
   QuasarAnimation.init(canvas);
 
@@ -30,11 +36,11 @@ window.quasarAnimationInit = () => {
   QuasarAnimation.start();
 };
 
-window.quasarAnimationStart = () => {
+window.animationStart = () => {
   QuasarAnimation.start();
 };
 
-window.quasarAnimationPlayPause = (el: HTMLInputElement) => {
+window.animationPlayPause = (el: HTMLInputElement) => {
   if (el.value === 'Pause') {
     el.value = 'Resume';
   } else {
@@ -44,24 +50,42 @@ window.quasarAnimationPlayPause = (el: HTMLInputElement) => {
   QuasarAnimation.playPause();
 };
 
-window.quasarAnimationStartJet = () => {
+window.animationStartJet = () => {
   QuasarAnimation.startJet();
 };
 
-window.quasarAnimationForward = (value: string) => {
-  QuasarAnimation.forward(parseFloat(value));
-};
-
-window.quasarAnimationSetQuasarRadius = (radius: string) => {
+// generator parameters set
+window.animationSetQuasarRadius = (radius: string) => {
   QuasarAnimation.setQuasarRadius(parseFloat(radius));
 };
 
-window.quasarAnimationSetParticleGenerateStep = (step: string) => {
+window.animationSetBlackHoleSize = (size: string) => {
+  QuasarAnimation.setBlackHoleSize(parseFloat(size));
+};
+
+window.animationSetParticleGenerateStep = (step: string) => {
   QuasarAnimation.setParticleGenerateStep(parseFloat(step));
 };
 
-window.quasarAnimationRotate = (value: string, axis: 'x' | 'y' | 'z') => {
+window.animationSetParticleMoveX = (x: string) => {
+  QuasarAnimation.setParticleMoveX(parseFloat(x));
+};
+
+window.animationSetParticleMoveAngle = (angle: string) => {
+  QuasarAnimation.setParticleMoveAngle(parseFloat(angle));
+};
+
+// dynamic parameters update
+window.animationRotate = (value: string, axis: 'x' | 'y' | 'z') => {
   QuasarAnimation.rotate(parseFloat(value), axis);
+};
+
+window.animationForward = (value: string) => {
+  QuasarAnimation.forward(parseFloat(value));
+};
+
+window.animationUpdateLight = (value: string) => {
+  QuasarAnimation.updateLight(parseFloat(value));
 };
 
 function rotateCbHandler(value: number, axis: 'x' | 'y' | 'z') {

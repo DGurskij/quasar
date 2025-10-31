@@ -6,29 +6,37 @@
     <link rel="stylesheet" href="style.css">
     <title>Quasar</title>
   </head>
-  <body onload="quasarAnimationInit();" style="margin: 0px;">
+  <body onload="animationInit();" style="margin: 0px;">
     <section id="panel">
-      <a href="lmg/generator.html">Generate large model</a>
-      <input type="button" value="Start/Restart" onclick="quasarAnimationStart()">
-      <input type="button" value="Pause" onclick="quasarAnimationPlayPause(this)">
+      <!-- <a href="lmg/generator.html">Generate large model</a> -->
+      <input type="button" value="Start/Restart" onclick="animationStart()">
+      <input type="button" value="Pause" onclick="animationPlayPause(this)">
       <label for="">RT params</label>
       <label for="">Rotate X</label>
-      <input type="range" min="0" max="360" value="0" step="1" oninput="quasarAnimationRotate(this.value, 'x')" name="control_rotate">
+      <input type="range" min="0" max="360" value="0" step="1" oninput="animationRotate(this.value, 'x')" name="control_rotate">
       <label for="">Rotate Y</label>
-      <input type="range" min="0" max="360" value="0" step="1" oninput="quasarAnimationRotate(this.value, 'y')" name="control_rotate">
+      <input type="range" min="0" max="360" value="0" step="1" oninput="animationRotate(this.value, 'y')" name="control_rotate">
       <label for="">Rotate Z</label>
-      <input type="range" min="0" max="360" value="0" step="1" oninput="quasarAnimationRotate(this.value, 'z')" name="control_rotate">
+      <input type="range" min="0" max="360" value="0" step="1" oninput="animationRotate(this.value, 'z')" name="control_rotate">
       <label for="">Distance</label>
-      <input type="range" min="0.5" max="5" value="1" step="0.01" oninput="quasarAnimationForward(this.value)">
+      <input type="range" min="0.5" max="5" value="1" step="0.01" oninput="animationForward(this.value)">
+      <label for="">Light</label>
+      <input type="range" min="0.5" max="1.5" value="1" step="0.01" oninput="animationUpdateLight(this.value)">
       <br>
       <label for="">Generator params (need restart)</label>
-      <label for="">Density</label>
-      <input type="range" min="0.05" max="1" value="0.2" step="0.01" oninput="quasarAnimationSetParticleGenerateStep(this.value)" style="direction: rtl;">
       <label for="">Quasar radius</label>
-      <input type="range" min="500" max="2000" value="1000" step="10" oninput="quasarAnimationSetQuasarRadius(this.value)">
+      <input type="range" min="500" max="2000" value="1000" step="10" oninput="animationSetQuasarRadius(this.value)">
+      <label for="">Black hole size</label>
+      <input type="range" min="30" max="150" value="100" step="5" oninput="animationSetBlackHoleSize(this.value)">
+      <label for="">Density</label>
+      <input type="range" min="0.05" max="1" value="0.2" step="0.01" oninput="animationSetParticleGenerateStep(this.value)" style="direction: rtl;">
+      <label for="">Particle move X</label>
+      <input type="range" min="0.005" max="0.04" value="0.02" step="0.001" oninput="animationSetParticleMoveX(this.value)">
+      <label for="">Particle move angle</label>
+      <input type="range" min="0.0001" max="0.0004" value="0.00025" step="0.00001" oninput="animationSetParticleMoveAngle(this.value)">
     </section>
     <div id="area-container">
-      <canvas id="area" onclick="quasarAnimationStartJet()"></canvas>
+      <canvas id="area" onclick="animationStartJet()"></canvas>
     </div>
 
     <!--Shaders for draw particles-->

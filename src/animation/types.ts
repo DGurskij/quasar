@@ -1,12 +1,18 @@
-export interface IJetParticle {
-  x: number;
-  z: number;
-  size: number;
-  angle: number;
-  color: [number, number, number];
-}
-
 export interface IQuasarMetrices {
   quantityParticles: number;
   quantityValues: number;
+}
+
+export interface IQuasarGenerativeParameters {
+  quasarRadius: number;
+  blackHoleSize: number;
+  particleMoveX: number;
+  particleMoveAngle: number;
+  particleGenerateStep: number;
+}
+
+export interface IQuasarJetParameters {
+  jetsMoveZ: number;
+  jetsMoveX: number;
+  jetsMoveAngle: number;
 }

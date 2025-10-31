@@ -1,142 +1,168 @@
+/* eslint-disable prefer-destructuring */
 import { centerBiasedRandom, leftBiasedRandom, random, vecMulValue, vecSumVec } from 'src/common/math';
+import { FLOAT32_SIZE } from 'src/webgl/size.const';
 
 import { PI, PI_DIV_TWO, PI_MUL_TWO } from '../common/math.const';
 
-import { QuasarAnimation } from './Animation';
 import {
-  BLACK_HOLE_RADIUS_SQUARED,
-  BLACK_HOLE_SIZE,
   COLORS,
-  JETS_MAX_Z,
   JETS_MOVE_A,
   JETS_MOVE_X,
   JETS_MOVE_Z,
   JETS_START_X,
   JETS_START_X_DISPERSION,
-  JETS_START_Z,
+  JETS_START_Z_MULTIPLIER,
+  JETS_START_Z_OFFSET,
   MAX_SIZE,
   MIN_SIZE_MUL,
   P_D_ALPHA,
-  P_GEN_OFFSET,
-  P_MOVE_ANGLE,
-  P_MOVE_X,
-  P_Z_DISPERSION,
+  PARTICLE_Z_DISPERSION_MULTIPLIER,
   QUANTITY_ARM,
   QUANTITY_EL_GENERATE,
-} from './generate.const';
-import { IJetParticle } from './types';
+} from './animation.const';
+import { QuasarAnimation } from './QuasarAnimation';
 
 /**
  * Buffer data for particles
  * [x, y, z, angle, colorR, colorG, colorB]
  */
 let particlesGPU: Float32Array;
-let offsetGPU: number = 0;
+/**
+ * 35M elements for 5M particles - 7 floats per particle
+ */
+const PARTICLES_GPU_SIZE = 35000000;
+let offsetParticlesGPU: number;
 /**
  * Data for CPU calculations
- * [abs(0.1 * originZ), originZ, originAngle]
+ * [abs(0.1 * originZ), originDeltaAngle, originAngle]
  */
 let particlesCPU: Float32Array;
-let offsetCPU: number = 0;
+/**
+ * 15M elements for 5M particles - 3 floats per particle
+ */
+const PARTICLES_CPU_SIZE = 15000000;
+let offsetParticlesCPU: number;
 
-let quantityParticles: number = 0;
+let quantityParticles: number;
 
-let jetMinus: IJetParticle[] = [];
-let quantityParticlesJetMinus: number = 0;
-let jetPlus: IJetParticle[] = [];
-let quantityParticlesJetPlus: number = 0;
+/**
+ * Buffer data for JET particles
+ * [x, y, z, angle, colorR, colorG, colorB]
+ */
+let jetParticlesGPU: Float32Array;
+/**
+ * 1.75M elements for 250K jet particles - 7 floats per particle
+ */
+const JET_PARTICLES_GPU_SIZE = 1750000;
+let offsetJetParticlesGPU: number;
+/**
+ * Data for CPU calculations
+ * [directionSign]
+ */
+let jetParticlesCPU: Float32Array;
+/**
+ * 250K elements for 250K jet particles - 1 float per particle
+ */
+const JET_PARTICLES_CPU_SIZE = 250000;
+let offsetJetParticlesCPU: number;
 
-// let addParticle;
+let quantityJetParticles: number;
+
+// computed constants
+let blackHoleRadiusSquared: number;
+let particleZCollapseRadius: number;
 
 let quasarRadius: number;
-let globalConst: number;
 
 let particleMoveX: number;
 let particleMoveAngle: number;
-// let particlesAddStep: number;
 let particleZ_Dispersion: number;
-
-//let p_add_step_j;
-
-let particleGenerateOffset: number;
 
 let jetParticleMoveX: number;
 let jetParticleMoveZ: number;
 let jetParticleMoveAngle: number;
 
-let jetsMaxZ: number;
 let jetsStartX: number;
 let jetStartXMin: number;
 let jetStartXMax: number;
 let jetsStartZ: number;
 
-const particlesIndicesForRefresh: number[] = new Array(100000);
-let quantityParticlesForRefresh: number = 0;
+let particlesIndicesForRefresh: number[];
+const PARTICLES_INDICES_FOR_REFRESH_SIZE = 100000;
+let quantityParticlesForRefresh: number;
+
+let buffersInitialized: boolean = false;
+let jetsGPUAllocated: boolean = false;
 
 /**
  * Get Window params and Deploy Field
  */
 export function initParticlesForCanvas(this: QuasarAnimation) {
-  particlesGPU = new Float32Array(35000000); // 35M elements for 5M particles
-  particlesCPU = new Float32Array(15000000); // 15M elements for 5M particles
+  if (!buffersInitialized) {
+    particlesGPU = new Float32Array(PARTICLES_GPU_SIZE);
+    particlesCPU = new Float32Array(PARTICLES_CPU_SIZE);
 
-  this.particlesF32 = particlesGPU;
-  jetMinus = [];
-  this.jetMinus = jetMinus;
-  jetPlus = [];
-  this.jetPlus = jetPlus;
+    jetParticlesGPU = new Float32Array(JET_PARTICLES_GPU_SIZE);
+    jetParticlesCPU = new Float32Array(JET_PARTICLES_CPU_SIZE);
 
-  offsetGPU = 0;
-  offsetCPU = 0;
+    particlesIndicesForRefresh = new Array(PARTICLES_INDICES_FOR_REFRESH_SIZE);
 
+    buffersInitialized = true;
+  }
+
+  this.particlesGpuF32 = particlesGPU;
+  this.jetParticlesGpuF32 = jetParticlesGPU;
+
+  offsetParticlesGPU = 0;
+  offsetParticlesCPU = 0;
   quantityParticles = 0;
-  quantityParticlesJetMinus = 0;
-  quantityParticlesJetPlus = 0;
 
-  // eslint-disable-next-line prefer-destructuring
-  quasarRadius = this.quasarRadius;
-  // this.globalRadius = globalRadius;
-  globalConst = quasarRadius / 600;
-  this.globalConst = globalConst;
+  offsetJetParticlesGPU = 0;
+  offsetJetParticlesCPU = 0;
+  quantityJetParticles = 0;
 
-  particleMoveX = P_MOVE_X * globalConst;
-  particleMoveAngle = P_MOVE_ANGLE * globalConst;
+  quantityParticlesForRefresh = 0;
 
-  particleGenerateOffset = P_GEN_OFFSET / globalConst;
-  particleZ_Dispersion = P_Z_DISPERSION; // P_Z_DISPERSION * globalConst;
+  quasarRadius = this.quasarGenerativeParameters.quasarRadius;
+  const blackHoleRadius = this.quasarGenerativeParameters.blackHoleSize * 0.5;
+
+  // compute constants
+  blackHoleRadiusSquared = blackHoleRadius ** 2;
+  particleZCollapseRadius = blackHoleRadius + quasarRadius * 0.3;
+
+  // copy generative parameters
+  particleMoveX = this.quasarGenerativeParameters.particleMoveX;
+  particleMoveAngle = this.quasarGenerativeParameters.particleMoveAngle;
+
+  particleZ_Dispersion = this.quasarGenerativeParameters.blackHoleSize * PARTICLE_Z_DISPERSION_MULTIPLIER;
 
   jetParticleMoveX = JETS_MOVE_X;
   jetParticleMoveZ = JETS_MOVE_Z;
   jetParticleMoveAngle = JETS_MOVE_A;
-  jetsMaxZ = JETS_MAX_Z * globalConst;
-  this.jetsMaxZ = jetsMaxZ;
+
   jetsStartX = JETS_START_X;
   jetStartXMin = jetsStartX - JETS_START_X_DISPERSION;
   jetStartXMax = jetsStartX + JETS_START_X_DISPERSION;
-  jetsStartZ = JETS_START_Z;
+  jetsStartZ = this.quasarGenerativeParameters.blackHoleSize * JETS_START_Z_MULTIPLIER + JETS_START_Z_OFFSET;
 
   let radius = quasarRadius;
-  offsetGPU = 0;
 
-  // eslint-disable-next-line prefer-destructuring
-  const particleGenerateStep = this.particleGenerateStep;
-  console.log('particleGenerateStep', particleGenerateStep);
+  const { particleGenerateStep } = this.quasarGenerativeParameters;
 
-  while (radius > 0) {
+  while (radius > blackHoleRadius) {
     generateParticles(radius);
     radius -= particleGenerateStep;
   }
 
   this.quantityParticles = quantityParticles;
-  // console.log(particles);
 
-  // store particles in buffer
   const { gl } = this;
 
+  // allocate memory for particles
   gl.bindVertexArray(this.particlesVAO);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, this.particlesVBO);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(particlesGPU), gl.DYNAMIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, offsetParticlesGPU * FLOAT32_SIZE, gl.STREAM_DRAW);
 
   gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 28, 0);
   gl.enableVertexAttribArray(0);
@@ -145,48 +171,59 @@ export function initParticlesForCanvas(this: QuasarAnimation) {
   gl.enableVertexAttribArray(1);
 
   gl.bindVertexArray(null);
+
+  // allocate memory for jet particles, can be done once
+  if (!jetsGPUAllocated) {
+    gl.bindVertexArray(this.jetParticlesVAO);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.jetParticlesVBO);
+    gl.bufferData(gl.ARRAY_BUFFER, JET_PARTICLES_GPU_SIZE * FLOAT32_SIZE, gl.STREAM_DRAW);
+
+    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 28, 0);
+    gl.enableVertexAttribArray(0);
+
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 28, 16);
+    gl.enableVertexAttribArray(1);
+
+    gl.bindVertexArray(null);
+
+    jetsGPUAllocated = true;
+  }
 }
 
 /**
  * Move particles and jet particles
  */
 export function animationEngine(this: QuasarAnimation) {
-  // let flag = 0;
-  // let deletedStart = -1; // Index of the first particle to be deleted
   quantityParticlesForRefresh = 0;
 
   for (let i = 0; i < quantityParticles; i++) {
     if (particleInBlackHole(i)) {
       particlesIndicesForRefresh[quantityParticlesForRefresh++] = i;
     } else {
-      const particlePtr = 7 * i;
+      const particleF32Ptr = 7 * i;
       // move particles which are not in the black hole
       // particlesGPU[particlePtr] -= particleMoveX * (2.0 - particlesGPU[particlePtr] / quasarRadius);
       // particlesGPU[particlePtr + 3] += particleMoveAngle * (2.0 - particlesGPU[particlePtr] / quasarRadius);
-      particlesGPU[particlePtr] -= particleMoveX;
-      particlesGPU[particlePtr + 3] += particleMoveAngle;
+      particlesGPU[particleF32Ptr] -= particleMoveX;
+      particlesGPU[particleF32Ptr + 3] += particleMoveAngle;
 
-      if (
-        particlesGPU[particlePtr] < BLACK_HOLE_SIZE + quasarRadius * 0.3 &&
-        Math.abs(particlesGPU[particlePtr + 1]) > particlesCPU[3 * i]
-      ) {
-        particlesGPU[particlePtr + 1] *= 0.995;
+      if (particlesGPU[particleF32Ptr] < particleZCollapseRadius && Math.abs(particlesGPU[particleF32Ptr + 1]) > particlesCPU[3 * i]) {
+        particlesGPU[particleF32Ptr + 1] *= 0.995;
       }
     }
   }
 
+  // console.log(quantityParticlesForRefresh);
+
   refreshParticles();
 
-  for (let i = 0; i < quantityParticlesJetMinus; i++) {
-    jetMinus[i].x += jetParticleMoveX;
-    jetMinus[i].z -= jetParticleMoveZ;
-    jetMinus[i].angle += jetParticleMoveAngle;
-  }
+  for (let i = 0; i < quantityJetParticles; i++) {
+    const jetParticleF32Ptr = 7 * i;
 
-  for (let i = 0; i < quantityParticlesJetPlus; i++) {
-    jetPlus[i].x += jetParticleMoveX;
-    jetPlus[i].z += jetParticleMoveZ;
-    jetPlus[i].angle -= jetParticleMoveAngle;
+    jetParticlesGPU[jetParticleF32Ptr] += jetParticleMoveX;
+    jetParticlesGPU[jetParticleF32Ptr + 1] += jetParticleMoveZ * jetParticlesCPU[i];
+    jetParticlesGPU[jetParticleF32Ptr + 3] -= jetParticleMoveAngle * jetParticlesCPU[i]; // angle is reversed for top jets
   }
 
   if (this.jetsTime > 0) {
@@ -196,20 +233,16 @@ export function animationEngine(this: QuasarAnimation) {
   } else {
     this.jetLight -= 0.025;
 
-    if (this.jetLight < 0 && this.quantityParticlesJetPlus !== 0 && this.quantityParticlesJetMinus !== 0) {
-      console.log(this.quantityParticlesJetMinus, this.quantityParticlesJetPlus);
-      quantityParticlesJetPlus = 0;
-      quantityParticlesJetMinus = 0;
+    if (this.jetLight < 0 && this.quantityJetParticles !== 0) {
+      // console.log(this.quantityJetParticles);
 
-      jetPlus = [];
-      this.jetPlus = jetPlus;
-      jetMinus = [];
-      this.jetMinus = jetMinus;
+      quantityJetParticles = 0;
+      offsetJetParticlesGPU = 0;
+      offsetJetParticlesCPU = 0;
     }
   }
 
-  this.quantityParticlesJetMinus = quantityParticlesJetMinus;
-  this.quantityParticlesJetPlus = quantityParticlesJetPlus;
+  this.quantityJetParticles = quantityJetParticles;
 }
 
 function particleInBlackHole(index: number) {
@@ -217,17 +250,23 @@ function particleInBlackHole(index: number) {
   const z = particlesGPU[7 * index + 1];
   const distanceSquared = x * x + z * z;
 
-  return distanceSquared < BLACK_HOLE_RADIUS_SQUARED;
-  // return false;
+  return distanceSquared < blackHoleRadiusSquared;
 }
 
 function refreshParticles() {
   for (let i = 0; i < quantityParticlesForRefresh; i++) {
-    const index = particlesIndicesForRefresh[i];
-    particlesGPU[7 * index] = quasarRadius; // set particle to quasar radius
-    particlesCPU[3 * index + 1] = centerBiasedRandom(-particleZ_Dispersion, particleZ_Dispersion, 0.1); // particlesCPU[3 * index + 2]; // set particle z to origin z
-    particlesGPU[7 * index + 3] = particlesCPU[3 * index + 2]; // set particle angle to origin angle
-    // particlesGPU[7 * index + 3] = particlesCPU[3 * index + 2] + centerBiasedRandom(-PI_DIV_TWO, PI_DIV_TWO, 1.1); // set particle angle to origin angle
+    const particleF32Ptr = 7 * particlesIndicesForRefresh[i];
+    const particleIndex = particlesIndicesForRefresh[i];
+
+    const z = centerBiasedRandom(-particleZ_Dispersion, particleZ_Dispersion, 2.1);
+    const dispersion = (Math.abs(particlesCPU[3 * particleIndex + 1]) / PI) * 3 + Math.abs(z) / particleZ_Dispersion;
+
+    particlesGPU[particleF32Ptr] = quasarRadius; // set particle to quasar radius
+    particlesGPU[particleF32Ptr + 1] = z; // set particle z to origin z
+    particlesGPU[particleF32Ptr + 2] = MAX_SIZE - MIN_SIZE_MUL * dispersion; // set particle size based on dispersion
+    particlesGPU[particleF32Ptr + 3] = particlesCPU[3 * particleIndex + 2]; // set particle angle to origin angle
+
+    particlesCPU[3 * particleIndex] = leftBiasedRandom(0, 0.8, 3.0) * z;
   }
 }
 
@@ -237,12 +276,12 @@ function generateParticles(v: number) {
   const deltaColor = [0, 0, 0];
   // let start = startPosition;
 
-  const alphaOffset = particleGenerateOffset * (quasarRadius - v);
+  const alphaOffset = (particleMoveAngle * (quasarRadius - v)) / particleMoveX;
 
-  const quantityElGenerate = QUANTITY_EL_GENERATE * 0.5 + QUANTITY_EL_GENERATE * (1.0 - v / quasarRadius);
+  // const quantityElGenerate = QUANTITY_EL_GENERATE * 0.5 + QUANTITY_EL_GENERATE * (1.0 - v / quasarRadius);
 
   for (let k = 0; k < QUANTITY_ARM; k++) {
-    for (let i = 0; i < quantityElGenerate; i++) {
+    for (let i = 0; i < QUANTITY_EL_GENERATE; i++) {
       // const deltaAngle = random(-PI_DIV_TWO, PI_DIV_TWO);
       // const z = random(-particleZ_Dispersion, particleZ_Dispersion);
       const deltaAngle = centerBiasedRandom(-PI_DIV_TWO, PI_DIV_TWO, 1.1 + (0.9 - v / quasarRadius));
@@ -256,18 +295,18 @@ function generateParticles(v: number) {
 
       const color = vecMulValue(vecSumVec(COLORS[k], deltaColor), 1.0);
 
-      particlesGPU[offsetGPU++] = v;
-      particlesGPU[offsetGPU++] = v < BLACK_HOLE_SIZE + quasarRadius * 0.3 ? minZ : z;
-      particlesGPU[offsetGPU++] = size;
-      particlesGPU[offsetGPU++] = angle + alphaOffset + deltaAngle;
+      particlesGPU[offsetParticlesGPU++] = v;
+      particlesGPU[offsetParticlesGPU++] = v < particleZCollapseRadius ? minZ : z;
+      particlesGPU[offsetParticlesGPU++] = size;
+      particlesGPU[offsetParticlesGPU++] = angle + alphaOffset + deltaAngle;
 
-      particlesGPU[offsetGPU++] = color[0];
-      particlesGPU[offsetGPU++] = color[1];
-      particlesGPU[offsetGPU++] = color[2];
+      particlesGPU[offsetParticlesGPU++] = color[0];
+      particlesGPU[offsetParticlesGPU++] = color[1];
+      particlesGPU[offsetParticlesGPU++] = color[2];
 
-      particlesCPU[offsetCPU++] = Math.abs(minZ);
-      particlesCPU[offsetCPU++] = z;
-      particlesCPU[offsetCPU++] = angle + deltaAngle;
+      particlesCPU[offsetParticlesCPU++] = Math.abs(minZ);
+      particlesCPU[offsetParticlesCPU++] = deltaAngle;
+      particlesCPU[offsetParticlesCPU++] = angle + deltaAngle;
 
       quantityParticles++;
     }
@@ -283,31 +322,77 @@ function generateJetParticles() {
   let z: number;
   // let color: [number, number, number];
 
-  for (let i = 0; i < 40; i++) {
-    x = centerBiasedRandom(jetStartXMin, jetStartXMax, 4.3);
-    angle = centerBiasedRandom(0, PI_MUL_TWO, 4.3);
-    size = random(1, 1.5);
+  for (let i = 0; i < 50; i++) {
+    // bottom jet
+    x = centerBiasedRandom(jetStartXMin, jetStartXMax, 5.3);
+    angle = centerBiasedRandom(0, PI_MUL_TWO, 5.3);
+    size = random(0.7, 1.5);
     z = -jetsStartZ - random(0, 16);
 
-    jetMinus[quantityParticlesJetMinus++] = {
-      x: x,
-      z: z,
-      size: size,
-      angle: angle,
-      color: [0, 1.4 - angle / PI_MUL_TWO, 1],
-    };
+    jetParticlesGPU[offsetJetParticlesGPU++] = x;
+    jetParticlesGPU[offsetJetParticlesGPU++] = z;
+    jetParticlesGPU[offsetJetParticlesGPU++] = size;
+    jetParticlesGPU[offsetJetParticlesGPU++] = angle;
 
-    x = centerBiasedRandom(jetStartXMin, jetStartXMax, 4.3);
-    angle = centerBiasedRandom(0, PI_MUL_TWO, 4.3);
-    size = random(1, 2.5);
+    jetParticlesGPU[offsetJetParticlesGPU++] = 0;
+    jetParticlesGPU[offsetJetParticlesGPU++] = 1.4 - angle / PI_MUL_TWO;
+    jetParticlesGPU[offsetJetParticlesGPU++] = 1;
+
+    jetParticlesCPU[offsetJetParticlesCPU++] = -1;
+
+    // jetMinus[quantityParticlesJetMinus++] = {
+    //   x: x,
+    //   z: z,
+    //   size: size,
+    //   angle: angle,
+    //   color: [0, 1.4 - angle / PI_MUL_TWO, 1],
+    // };
+
+    // top jet
+    x = centerBiasedRandom(jetStartXMin, jetStartXMax, 5.3);
+    angle = centerBiasedRandom(0, PI_MUL_TWO, 5.3);
+    size = random(0.7, 1.5);
     z = jetsStartZ + random(0, 16);
 
-    jetPlus[quantityParticlesJetPlus++] = {
-      x: x,
-      z: z,
-      size: size,
-      angle: angle,
-      color: [0, 1.4 - angle / PI_MUL_TWO, 1.0],
-    };
+    jetParticlesGPU[offsetJetParticlesGPU++] = x;
+    jetParticlesGPU[offsetJetParticlesGPU++] = z;
+    jetParticlesGPU[offsetJetParticlesGPU++] = size;
+    jetParticlesGPU[offsetJetParticlesGPU++] = angle;
+
+    jetParticlesGPU[offsetJetParticlesGPU++] = 0;
+    jetParticlesGPU[offsetJetParticlesGPU++] = 1.4 - angle / PI_MUL_TWO;
+    jetParticlesGPU[offsetJetParticlesGPU++] = 1;
+
+    jetParticlesCPU[offsetJetParticlesCPU++] = 1;
+
+    // jetPlus[quantityParticlesJetPlus++] = {
+    //   x: x,
+    //   z: z,
+    //   size: size,
+    //   angle: angle,
+    //   color: [0, 1.4 - angle / PI_MUL_TWO, 1.0],
+    // };
   }
+
+  quantityJetParticles += 50 * 2; // 40 bottom jets + 40 top jets
+}
+
+/**
+ * destroy and unlink float32 arrays and another large arrays
+ */
+export function destroyBuffers(qa: QuasarAnimation) {
+  (qa.particlesGpuF32 as any) = null;
+  (qa.jetParticlesGpuF32 as any) = null;
+
+  (particlesGPU as any) = null;
+  (jetParticlesGPU as any) = null;
+
+  (particlesCPU as any) = null;
+  (jetParticlesCPU as any) = null;
+
+  (particlesIndicesForRefresh as any) = null;
+  quantityParticlesForRefresh = 0;
+
+  buffersInitialized = false;
+  jetsGPUAllocated = false;
 }
