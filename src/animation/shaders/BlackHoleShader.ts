@@ -18,9 +18,7 @@ out vec4 out_FragColor;
 
 void main()
 {
-  vec3 color = vec3(0.0, 0.0, 0.0);
   float len = length(gl_PointCoord - 0.5);
-
   float edge = smoothstep(0.49, 0.5, len);
   float alpha = 1.0 - edge;
 
@@ -28,7 +26,7 @@ void main()
   vec3 centerColor = vec3(0.0, 0.0, 0.0); // black center
   vec3 edgeColor = vec3(0.8, 0.9, 1.0); // color from particle shader
 
-  float t = length(gl_PointCoord - 0.5) / 0.5; // from center to edge
+  float t = len / 0.5; // from center to edge
   vec3 finalColor = mix(centerColor, edgeColor, pow(t, 12.5));
   out_FragColor = vec4(finalColor, alpha);
 }`;
