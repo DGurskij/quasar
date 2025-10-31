@@ -3,6 +3,7 @@ import { WEBGL_STATUSES } from 'src/webgl/WebGLStatus';
 import { QuasarAnimation } from './Animation';
 import { drawScene, initWebGL } from './DrawFunctions';
 import { animationEngine, initParticlesForCanvas } from './EngineFunctions';
+import { IQuasarMetrices } from './types';
 
 let quasarAnimation: QuasarAnimation;
 
@@ -31,7 +32,11 @@ export function init(canvas: HTMLCanvasElement) {
 // External API
 
 export function start() {
-  quasarAnimation.start();
+  quasarAnimation.stop();
+
+  setTimeout(() => {
+    quasarAnimation.start();
+  }, 100);
 }
 
 export function playPause() {
@@ -42,8 +47,16 @@ export function playPause() {
   }
 }
 
-export function setAreaSize(width: number, height: number) {
-  quasarAnimation.setAreaSize(width, height);
+export function setCanvasSize(width: number, height: number) {
+  quasarAnimation.setCanvasSize(width, height);
+}
+
+export function setQuasarRadius(radius: number) {
+  quasarAnimation.setQuasarRadius(radius);
+}
+
+export function setParticleGenerateStep(step: number) {
+  quasarAnimation.setParticleGenerateStep(step);
 }
 
 export function rotate(value: number, axis: 'x' | 'y' | 'z') {
@@ -56,4 +69,12 @@ export function forward(value: number) {
 
 export function startJet() {
   quasarAnimation.startJet();
+}
+
+export function setRotateCb(cb: (value: number, axis: 'x' | 'y' | 'z') => void) {
+  quasarAnimation.onRotate = cb;
+}
+
+export function setUpdateMetricesCb(cb: (metrices: IQuasarMetrices) => void) {
+  quasarAnimation.onUpdateMetrices = cb;
 }

@@ -54,7 +54,7 @@ export function drawScene(this: QuasarAnimation) {
     gl.uniform1f(shaders.jetParticle.uniforms['u_light'], this.jetLight);
     gl.uniformMatrix4fv(shaders.jetParticle.uniforms['u_transform'], false, this.matTransformation);
     gl.uniform1f(shaders.jetParticle.uniforms['u_distance'], this.distance);
-    gl.uniform1f(shaders.jetParticle.uniforms['u_max_h'], this.jetsMaxZ);
+    // gl.uniform1f(shaders.jetParticle.uniforms['u_max_h'], this.jetsMaxZ);
 
     const points: number[] = [];
     const colors: number[] = [];
@@ -102,12 +102,12 @@ export function drawScene(this: QuasarAnimation) {
     gl.uniform1f(shaders.particle.uniforms['u_light'], this.light);
     gl.uniformMatrix4fv(shaders.particle.uniforms['u_transform'], false, this.matTransformation);
     gl.uniform1f(shaders.particle.uniforms['u_distance'], this.distance);
-    gl.uniform1f(shaders.particle.uniforms['u_radius'], this.globalRadius);
+    gl.uniform1f(shaders.particle.uniforms['u_radius'], this.quasarRadius);
 
     gl.bindVertexArray(this.particlesVAO);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.particlesVBO);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(this.particles), 0);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.particlesF32.subarray(0, this.quantityParticles * 8));
 
     gl.drawArrays(gl.POINTS, 0, this.quantityParticles);
     gl.bindVertexArray(null);
@@ -122,5 +122,10 @@ export function drawScene(this: QuasarAnimation) {
   gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(0);
 
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
   gl.drawArrays(gl.POINTS, 0, 1);
+
+  gl.disable(gl.BLEND);
 }

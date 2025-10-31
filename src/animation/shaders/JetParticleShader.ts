@@ -7,7 +7,7 @@ layout (location = 1) in vec3 a_color;
 //global transform params
 uniform mat4 u_transform;
 uniform float u_distance;
-uniform float u_max_h;
+// uniform float u_max_h;
 
 out vec4 v_color;
 
@@ -28,7 +28,7 @@ void main()
     z = -a_position.y;
   }
 
-  v_color = vec4(a_color, 1.0) * (1.0 - pow(z / u_max_h, 3.0));
+  v_color = vec4(a_color, 1.0); // * (1.0 - pow(z / u_max_h, 3.0));
 }`;
 
 const fragment = `#version 300 es
@@ -52,5 +52,6 @@ void main()
 export default {
   vert: vertex,
   frag: fragment,
-  uniforms: ['u_transform', 'u_distance', 'u_max_h', 'u_light'],
+  uniforms: ['u_transform', 'u_distance', 'u_light'],
+  // uniforms: ['u_transform', 'u_distance', 'u_max_h', 'u_light'],
 } as IShaderSrc;

@@ -18,6 +18,7 @@ body {
 	padding-right: 20px;
 	overflow-y: hidden;
 	overflow-x: hidden;
+	z-index: 1000;
 }
 
 input {
@@ -146,4 +147,11 @@ input[type=range]::-moz-range-thumb {
 	outline: none;
 	font-weight: bold;
 	word-wrap: normal;
+}
+
+#area-container {
+	position: fixed;
+	height: 100%;
+	width: 100%;
+	z-index: 100;
 }

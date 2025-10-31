@@ -8,6 +8,26 @@ export function random(v1: number, v2: number) {
 	return Math.random() * (v1 - v2) + v2;
 }
 
+export function centerBiasedRandom(min: number, max: number, biasPower = 2) {
+	const mid = (min + max) / 2;
+	const range = (max - min) / 2;
+	const r = Math.pow(Math.random(), biasPower);
+
+	const sign = Math.random() < 0.5 ? -1 : 1;
+	return mid + sign * r * range;
+}
+
+export function leftBiasedRandom(min: number, max: number, biasPower = 2) {
+	const r = Math.pow(Math.random(), biasPower);
+	return min + r * (max - min);
+}
+
+export function rightBiasedRandom(min: number, max: number, biasPower = 2) {
+	const r = Math.pow(Math.random(), biasPower);
+	return max - r * (max - min);
+}
+
+
 export function getProjectionMatrix(width: number, height: number, depth: number) {
 	return [
 		2 / width, 0, 0, 0,

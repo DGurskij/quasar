@@ -5,3 +5,8 @@ export interface IJetParticle {
   angle: number;
   color: [number, number, number];
 }
+
+export interface IQuasarMetrices {
+  quantityParticles: number;
+  quantityValues: number;
+}

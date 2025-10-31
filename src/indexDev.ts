@@ -1,10 +1,17 @@
+import { IQuasarMetrices } from './animation/types';
+
 import { QuasarAnimation } from '.';
 
 declare global {
   interface Window {
     quasarAnimationInit: (canvas: HTMLCanvasElement) => void;
     quasarAnimationPlayPause: (el: HTMLInputElement) => void;
+    quasarAnimationStart: () => void;
     quasarAnimationStartJet: () => void;
+    quasarAnimationRotate: (value: string, axis: 'x' | 'y' | 'z') => void;
+    quasarAnimationForward: (value: string) => void;
+    quasarAnimationSetQuasarRadius: (radius: string) => void;
+    quasarAnimationSetParticleGenerateStep: (step: string) => void;
   }
 }
 
@@ -12,7 +19,18 @@ window.quasarAnimationInit = () => {
   const canvas = document.getElementById('area') as HTMLCanvasElement;
   QuasarAnimation.init(canvas);
 
-  QuasarAnimation.setAreaSize(2040, 1000);
+  QuasarAnimation.setRotateCb(rotateCbHandler);
+  QuasarAnimation.setUpdateMetricesCb(updateMetricesCbHandler);
+
+  const parentElement = canvas.parentElement as HTMLDivElement;
+  const parentWidth = parentElement.clientWidth;
+  const parentHeight = parentElement.clientHeight;
+
+  QuasarAnimation.setCanvasSize(parentWidth, parentHeight);
+  QuasarAnimation.start();
+};
+
+window.quasarAnimationStart = () => {
   QuasarAnimation.start();
 };
 
@@ -30,41 +48,40 @@ window.quasarAnimationStartJet = () => {
   QuasarAnimation.startJet();
 };
 
-// var resume = function (el) {
-//   el.value = 'Pause';
-//   el.onclick = () => pause(el);
+window.quasarAnimationForward = (value: string) => {
+  QuasarAnimation.forward(parseFloat(value));
+};
 
-//   state = 1;
-//   engine = setInterval(animationEngine, 16);
-// };
+window.quasarAnimationSetQuasarRadius = (radius: string) => {
+  QuasarAnimation.setQuasarRadius(parseFloat(radius));
+};
 
-// var rotate = function (value, index) {
-//   let v = value * DEGR_TO_RAD;
+window.quasarAnimationSetParticleGenerateStep = (step: string) => {
+  QuasarAnimation.setParticleGenerateStep(parseFloat(step));
+};
 
-//   if (index == 2) {
-//     rotate_z = getRotationZ(v);
-//   } else if (index) {
-//     rotate_y = getRotationY(v);
-//   } else {
-//     rotate_x = getRotationX(v);
-//   }
+window.quasarAnimationRotate = (value: string, axis: 'x' | 'y' | 'z') => {
+  QuasarAnimation.rotate(parseFloat(value), axis);
+};
 
-//   setTransformation();
+function rotateCbHandler(value: number, axis: 'x' | 'y' | 'z') {
+  const rotateInputs = document.getElementsByName('control_rotate') as NodeListOf<HTMLInputElement>;
 
-//   drawScene();
-// };
+  switch (axis) {
+    case 'x':
+      rotateInputs[0].value = value.toString();
+      break;
+    case 'y':
+      rotateInputs[1].value = value.toString();
+      break;
+    case 'z':
+      rotateInputs[2].value = value.toString();
+  }
+}
 
-// var forward = function (value) {
-//   distance = value;
-
-//   drawScene();
-// };
-
-// var generateJet = function () {
-//   if (jets_time == 0) {
-//     jets_time = JETS_TIME;
-//   }
-// };
+function updateMetricesCbHandler(metrices: IQuasarMetrices) {
+  console.log('metrices', metrices);
+}
 
 // var hide = function () {
 //   let panel = document.getElementById('panel');
