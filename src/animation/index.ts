@@ -1,3 +1,4 @@
+import { RAD_TO_DEGR } from 'src/common/math.const';
 import { WEBGL_STATUSES } from 'src/webgl/WebGLStatus';
 
 import {
@@ -25,6 +26,13 @@ import {
   MIN_PARTICLE_MOVE_ANGLE,
   MIN_PARTICLE_MOVE_X,
   MIN_RADIUS,
+  RECOMMEND_STEP_BLACK_HOLE_SIZE,
+  RECOMMEND_STEP_DISTANCE,
+  RECOMMEND_STEP_LIGHT,
+  RECOMMEND_STEP_PARTICLE_GENERATE_STEP,
+  RECOMMEND_STEP_PARTICLE_MOVE_ANGLE,
+  RECOMMEND_STEP_PARTICLE_MOVE_X,
+  RECOMMEND_STEP_RADIUS,
 } from './animation.const';
 import { disposeWebGL, drawScene, initWebGL } from './DrawFunctions';
 import { animationEngine, destroyBuffers, initParticlesForCanvas } from './EngineFunctions';
@@ -200,22 +208,34 @@ type RangeParams = 'quasarRadius' | 'blackHoleSize' | 'particleGenerateStep' | '
 export function getParameterRangeInfo(param: RangeParams) {
   switch (param) {
     case 'quasarRadius':
-      return { min: MIN_RADIUS, max: MAX_RADIUS };
+      return { min: MIN_RADIUS, max: MAX_RADIUS, recommendStep: RECOMMEND_STEP_RADIUS };
     case 'blackHoleSize':
-      return { min: MIN_BLACK_HOLE_SIZE, max: MAX_BLACK_HOLE_SIZE };
+      return { min: MIN_BLACK_HOLE_SIZE, max: MAX_BLACK_HOLE_SIZE, recommendStep: RECOMMEND_STEP_BLACK_HOLE_SIZE };
     case 'particleGenerateStep':
-      return { min: MIN_PARTICLE_GENERATE_STEP, max: MAX_PARTICLE_GENERATE_STEP };
+      return { min: MIN_PARTICLE_GENERATE_STEP, max: MAX_PARTICLE_GENERATE_STEP, recommendStep: RECOMMEND_STEP_PARTICLE_GENERATE_STEP };
     case 'particleMoveX':
-      return { min: MIN_PARTICLE_MOVE_X, max: MAX_PARTICLE_MOVE_X };
+      return { min: MIN_PARTICLE_MOVE_X, max: MAX_PARTICLE_MOVE_X, recommendStep: RECOMMEND_STEP_PARTICLE_MOVE_X };
     case 'particleMoveAngle':
-      return { min: MIN_PARTICLE_MOVE_ANGLE, max: MAX_PARTICLE_MOVE_ANGLE };
+      return { min: MIN_PARTICLE_MOVE_ANGLE, max: MAX_PARTICLE_MOVE_ANGLE, recommendStep: RECOMMEND_STEP_PARTICLE_MOVE_ANGLE };
     case 'distance':
-      return { min: MIN_DISTANCE, max: MAX_DISTANCE };
+      return { min: MIN_DISTANCE, max: MAX_DISTANCE, recommendStep: RECOMMEND_STEP_DISTANCE };
     case 'light':
-      return { min: MIN_LIGHT, max: MAX_LIGHT };
+      return { min: MIN_LIGHT, max: MAX_LIGHT, recommendStep: RECOMMEND_STEP_LIGHT };
     default:
       throw new Error(`Invalid range parameter: ${param}`);
   }
+}
+
+export function getAllParameterRanges() {
+  return {
+    quasarRadius: getParameterRangeInfo('quasarRadius'),
+    blackHoleSize: getParameterRangeInfo('blackHoleSize'),
+    particleGenerateStep: getParameterRangeInfo('particleGenerateStep'),
+    particleMoveX: getParameterRangeInfo('particleMoveX'),
+    particleMoveAngle: getParameterRangeInfo('particleMoveAngle'),
+    distance: getParameterRangeInfo('distance'),
+    light: getParameterRangeInfo('light'),
+  };
 }
 
 export function getInitialParameters() {
@@ -228,9 +248,9 @@ export function getInitialParameters() {
 
     distance: INIT_DISTANCE,
     light: INIT_LIGHT,
-    angleX: INIT_ANGLE_X,
-    angleY: INIT_ANGLE_Y,
-    angleZ: INIT_ANGLE_Z,
+    angleX: INIT_ANGLE_X * RAD_TO_DEGR,
+    angleY: INIT_ANGLE_Y * RAD_TO_DEGR,
+    angleZ: INIT_ANGLE_Z * RAD_TO_DEGR,
   };
 }
 

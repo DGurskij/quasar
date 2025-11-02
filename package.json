@@ -1,8 +1,8 @@
 {
-  "name": "@spacegame/gravityballs",
+  "name": "@spacegame/quasar",
   "version": "1.0.0",
   "private": true,
-  "description": "Black hole game",
+  "description": "Quasar animation",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DGurskij/BlackHole.git"
+    "url": "git+https://github.com/DGurskij/Quasar.git"
   },
   "keywords": [
     "webgl",
@@ -36,8 +36,8 @@
     "concurrently": "^9.1.2",
     "copy-webpack-plugin": "^13.0.0",
     "cross-env": "^10.0.0",
-    "esbuild": "^0.25.5",
-    "eslint": "^9.28.0",
+    "esbuild": "^0.25.12",
+    "eslint": "^9.39.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.4.1",

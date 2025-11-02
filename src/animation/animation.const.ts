@@ -16,15 +16,18 @@ export const QUANTITY_EL_GENERATE = 20;
 export const INIT_BLACK_HOLE_SIZE = 100;
 export const MIN_BLACK_HOLE_SIZE = 30;
 export const MAX_BLACK_HOLE_SIZE = 150;
+export const RECOMMEND_STEP_BLACK_HOLE_SIZE = 5;
 
 // particle constants
 export const INIT_PARTICLE_MOVE_X = 0.02;
 export const MIN_PARTICLE_MOVE_X = 0.005;
 export const MAX_PARTICLE_MOVE_X = 0.04;
+export const RECOMMEND_STEP_PARTICLE_MOVE_X = 0.001;
 
 export const INIT_PARTICLE_MOVE_ANGLE = 0.00025;
 export const MIN_PARTICLE_MOVE_ANGLE = 0.0001;
 export const MAX_PARTICLE_MOVE_ANGLE = 0.0004;
+export const RECOMMEND_STEP_PARTICLE_MOVE_ANGLE = 0.00001;
 
 export const PARTICLE_Z_DISPERSION_MULTIPLIER = 0.53;
 
@@ -53,18 +56,22 @@ export const INIT_ANGLE_Z = 0;
 export const INIT_DISTANCE = 1;
 export const MIN_DISTANCE = 0.5;
 export const MAX_DISTANCE = 5;
+export const RECOMMEND_STEP_DISTANCE = 0.01;
 
 // Light constants
 export const INIT_LIGHT = 1;
 export const MIN_LIGHT = 0.5;
 export const MAX_LIGHT = 1.5;
+export const RECOMMEND_STEP_LIGHT = 0.01;
 
 // Radius constants
 export const INIT_RADIUS = 800;
 export const MIN_RADIUS = 500;
 export const MAX_RADIUS = 2000;
+export const RECOMMEND_STEP_RADIUS = 10;
 
 // Particle generate step constants
 export const INIT_PARTICLE_GENERATE_STEP = 0.2;
 export const MIN_PARTICLE_GENERATE_STEP = 0.05;
 export const MAX_PARTICLE_GENERATE_STEP = 1;
+export const RECOMMEND_STEP_PARTICLE_GENERATE_STEP = 0.01;

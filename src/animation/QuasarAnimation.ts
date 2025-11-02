@@ -1,5 +1,5 @@
 import { getProjectionMatrix, getRotationX, getRotationY, getRotationZ, getTransformation } from 'src/common/math';
-import { DEGR_TO_RAD, RAD_TO_DEGR } from 'src/common/math.const';
+import { DEGR_TO_RAD } from 'src/common/math.const';
 
 import {
   INIT_ANGLE_X,
@@ -16,8 +16,8 @@ import {
 } from './animation.const';
 import { IQuasarGenerativeParameters, IQuasarMetrices } from './types';
 
-let drawTimeSum: number = 0;
-let frameCount: number = 0;
+// let drawTimeSum: number = 0;
+// let frameCount: number = 0;
 
 export class QuasarAnimation {
   engineFPS: number = 60;
@@ -147,17 +147,13 @@ export class QuasarAnimation {
 
     this.updateTransformation();
 
-    this.onRotate(this.angleX * RAD_TO_DEGR, 'x');
-    this.onRotate(this.angleY * RAD_TO_DEGR, 'y');
-    this.onRotate(this.angleZ * RAD_TO_DEGR, 'z');
-
     this.onUpdateMetrices({
       quantityParticles: this.quantityParticles,
       quantityValues: this.quantityParticles * 7,
     });
 
-    drawTimeSum = 0;
-    frameCount = 0;
+    // drawTimeSum = 0;
+    // frameCount = 0;
     this.lastTime = performance.now();
     // for (let i = 0; i < 2000; i++) {
     //   this.engineFunction();
@@ -165,7 +161,7 @@ export class QuasarAnimation {
     this.loop();
   }
 
-  loop() {
+  private loop() {
     if (this.animationState !== 1) {
       return;
     }
@@ -178,12 +174,12 @@ export class QuasarAnimation {
 
       // const t1 = performance.now();
       this.engineFunction();
-      const t2 = performance.now();
+      // const t2 = performance.now();
       this.drawFunction();
-      const t3 = performance.now();
-      // console.log('draw time', t3 - t2);
-      drawTimeSum += t3 - t2;
-      frameCount++;
+      // const t3 = performance.now();
+
+      // drawTimeSum += t3 - t2;
+      // frameCount++;
     }
 
     setTimeout(this.bindedLoop, 1);
@@ -209,10 +205,6 @@ export class QuasarAnimation {
     if (send) {
       this.onPlayPause(0);
     }
-
-    console.log('drawTimeSum', drawTimeSum);
-    console.log('frameCount', frameCount);
-    console.log('avgDrawTime', drawTimeSum / frameCount);
   }
 
   resume(send = false) {

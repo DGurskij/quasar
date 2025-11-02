@@ -34,6 +34,13 @@ window.animationInit = () => {
 
   QuasarAnimation.setCanvasSize(parentWidth, parentHeight);
   QuasarAnimation.start();
+
+  const rotateControllers = document.getElementsByName('control_rotate') as NodeListOf<HTMLInputElement>;
+  const initialParameters = QuasarAnimation.getInitialParameters();
+
+  rotateControllers[0].value = initialParameters.angleX.toString();
+  rotateControllers[1].value = initialParameters.angleY.toString();
+  rotateControllers[2].value = initialParameters.angleZ.toString();
 };
 
 window.animationStart = () => {
