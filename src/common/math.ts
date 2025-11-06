@@ -37,6 +37,9 @@ export function getProjectionMatrix(width: number, height: number, depth: number
 	];
 }
 
+/**
+ * Left-handed rotation matrix around the X axis
+ */
 export function getRotationX(a: number) {
 	const s = Math.sin(a);
 	const c = Math.cos(a);
@@ -61,13 +64,16 @@ export function getRotationY(a: number) {
 	];
 }
 
+/**
+ * Left-handed rotation matrix around the Z axis
+ */
 export function getRotationZ(a: number) {
 	const s = Math.sin(a);
 	const c = Math.cos(a);
 
 	return [
-		c, s, 0, 0,
-		-s, c, 0, 0,
+		c, -s, 0, 0,
+		s, c, 0, 0,
 		0, 0, 1, 0,
 		0, 0, 0, 1
 	];
@@ -77,8 +83,9 @@ export function getRotationZ(a: number) {
  * Calcualte the transformation matrix
  */
 export function getTransformation(rotateZ: number[], rotateY: number[], rotateX: number[], projection: number[]) {
-	// transformation = matrixMulMatrix(matrixMulMatrix(matrixMulMatrix(rotate_z, rotate_y), rotate_x), projection); // legacy reminder
 	return matrixMulMatrix(matrixMulMatrix(matrixMulMatrix(rotateZ, rotateY), rotateX), projection);
+
+
 }
 
 /* vector operations */

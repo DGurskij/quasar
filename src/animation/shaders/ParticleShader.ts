@@ -19,7 +19,6 @@ void main()
   float y = a_position.x * sin(a_position.w);
 
   gl_Position = u_transform * vec4(x, y, a_position.y, u_distance);
-  // gl_PointSize = a_position.z / u_distance;
   gl_PointSize = a_position.z;
 
   float t = a_position.x / u_radius;
