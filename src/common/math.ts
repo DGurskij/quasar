@@ -84,8 +84,6 @@ export function getRotationZ(a: number) {
  */
 export function getTransformation(rotateZ: number[], rotateY: number[], rotateX: number[], projection: number[]) {
 	return matrixMulMatrix(matrixMulMatrix(matrixMulMatrix(rotateZ, rotateY), rotateX), projection);
-
-
 }
 
 /* vector operations */
