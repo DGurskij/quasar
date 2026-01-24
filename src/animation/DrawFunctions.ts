@@ -72,10 +72,8 @@ export function drawScene(this: QuasarAnimation) {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.particlesVBO);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.particlesGpuF32.subarray(0, this.quantityParticles * 7));
 
-    // gl.enable(gl.BLEND);
-    // gl.blendFunc(gl.ONE, gl.ONE);
     gl.drawArrays(gl.POINTS, 0, this.quantityParticles);
-    // gl.disable(gl.BLEND);
+
     gl.bindVertexArray(null);
   }
 
