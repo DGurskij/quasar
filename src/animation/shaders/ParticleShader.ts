@@ -39,10 +39,12 @@ out vec4 out_FragColor;
 
 void main()
 {
-  float len = length(gl_PointCoord - 0.5);
-  float alpha = smoothstep(0.5, 0.0, len);
+  if(length(gl_PointCoord - 0.5) > 0.5)
+  {
+    discard;
+  }
 
-  out_FragColor = vec4(v_color.rgb, alpha);
+  out_FragColor = v_color * u_light;
 }`;
 
 export default {

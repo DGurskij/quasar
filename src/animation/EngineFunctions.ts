@@ -76,7 +76,7 @@ let quasarRadius: number;
 
 let particleMoveX: number;
 let particleMoveAngle: number;
-let particleZ_Dispersion: number;
+let particleZDispersion: number;
 
 let jetParticleMoveX: number;
 let jetParticleMoveZ: number;
@@ -134,7 +134,7 @@ export function initParticlesForCanvas(this: QuasarAnimation) {
   particleMoveX = this.quasarGenerativeParameters.particleMoveX;
   particleMoveAngle = this.quasarGenerativeParameters.particleMoveAngle;
 
-  particleZ_Dispersion = this.quasarGenerativeParameters.blackHoleSize * PARTICLE_Z_DISPERSION_MULTIPLIER;
+  particleZDispersion = this.quasarGenerativeParameters.blackHoleSize * PARTICLE_Z_DISPERSION_MULTIPLIER;
 
   jetParticleMoveX = JETS_MOVE_X;
   jetParticleMoveZ = JETS_MOVE_Z;
@@ -258,8 +258,8 @@ function refreshParticles() {
     const particleF32Ptr = 7 * particlesIndicesForRefresh[i];
     const particleIndex = particlesIndicesForRefresh[i];
 
-    const z = centerBiasedRandom(-particleZ_Dispersion, particleZ_Dispersion, 2.1);
-    const dispersion = (Math.abs(particlesCPU[3 * particleIndex + 1]) / PI) * 3 + Math.abs(z) / particleZ_Dispersion;
+    const z = centerBiasedRandom(-particleZDispersion, particleZDispersion, 2.1);
+    const dispersion = (Math.abs(particlesCPU[3 * particleIndex + 1]) / PI) * 3 + Math.abs(z) / particleZDispersion;
 
     particlesGPU[particleF32Ptr] = quasarRadius; // set particle to quasar radius
     particlesGPU[particleF32Ptr + 1] = z; // set particle z to origin z
@@ -285,9 +285,9 @@ function generateParticles(v: number) {
       // const deltaAngle = random(-PI_DIV_TWO, PI_DIV_TWO);
       // const z = random(-particleZ_Dispersion, particleZ_Dispersion);
       const deltaAngle = centerBiasedRandom(-PI_DIV_TWO, PI_DIV_TWO, 1.1 + (0.9 - v / quasarRadius));
-      const z = centerBiasedRandom(-particleZ_Dispersion, particleZ_Dispersion, 1.1 + (0.9 - v / quasarRadius));
+      const z = centerBiasedRandom(-particleZDispersion, particleZDispersion, 1.1 + (0.9 - v / quasarRadius));
       const minZ = leftBiasedRandom(0, 0.8, 3.0) * z;
-      const dispersion = (Math.abs(deltaAngle) / PI) * 3 + Math.abs(z) / particleZ_Dispersion;
+      const dispersion = (Math.abs(deltaAngle) / PI) * 3 + Math.abs(z) / particleZDispersion;
 
       size = MAX_SIZE - MIN_SIZE_MUL * dispersion;
 
