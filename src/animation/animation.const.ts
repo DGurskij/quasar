@@ -6,8 +6,8 @@ export const COLORS = [
   [0.97, 0.57, 0.03],
 ];
 
-export const MAX_SIZE = 4.1;
-export const MIN_SIZE_MUL = 2.9;
+export const MAX_SIZE = 3.5;
+export const MIN_SIZE_MUL = 2.5;
 
 export const QUANTITY_ARM = 2;
 export const QUANTITY_EL_GENERATE = 20;
